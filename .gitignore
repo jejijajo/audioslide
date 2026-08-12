@@ -1,0 +1,22 @@
+# Java / Maven 
+target/
+*.class
+*.jar
+!**/lib/*.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Docker / Secrets
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
