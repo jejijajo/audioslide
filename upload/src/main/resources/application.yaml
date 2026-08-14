@@ -1,3 +1,15 @@
 spring:
   application:
     name: upload
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: 123456789
+  buckets:
+    - raw-uploads
+    - media-output
