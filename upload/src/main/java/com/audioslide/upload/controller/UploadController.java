@@ -1,5 +1,6 @@
 package com.audioslide.upload.controller;
 
+import com.audioslide.upload.UploadService;
 import com.audioslide.upload.dto.UploadResponseDto;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
@@ -31,60 +32,11 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/api/upload")
 public class UploadController {
 
-    public final MinioClient minioClient;
+    public final UploadService uploadService;
 
     @PostMapping
-    public UploadResponseDto upload(@RequestPart("picture") MultipartFile picture, @RequestPart("audio") MultipartFile audio) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-
-        String pictureEtag = minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("raw-uploads")
-                        .object("pictures/" + picture.getOriginalFilename())
-                        .stream(picture.getInputStream(),picture.getSize(),-1)
-                        .contentType(picture.getContentType())
-                        .build()
-        ).etag();
-
-        String audioEtag = minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("raw-uploads")
-                        .object("audio/" + audio.getOriginalFilename())
-                        .stream(audio.getInputStream(),audio.getSize(),-1)
-                        .contentType(audio.getContentType())
-                        .build()
-        ).etag();
-
-
-        /*
-
-        FFmpeg ffmpeg = new FFmpeg("FFmpeg");
-
-        FFmpegBuilder builder = new FFmpegBuilder()
-                .addExtraArgs("-loop", "1")
-                .addInput(pictureFile.toString())
-                .addInput(audioFile.toString());
-
-        builder.setComplexFilter(
-                "[0:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black[v]"
-        );
-
-        builder.addOutput("D:/dv/temp/audioslide/video/"
-                        + audio.getOriginalFilename().substring(0, audio.getOriginalFilename().length()-3) + "mp4")
-                .addExtraArgs("-shortest")
-                .addExtraArgs("-map", "[v]")
-                .addExtraArgs("-map", "1:a")
-                .setVideoCodec("libx264")
-                .setAudioCodec("aac")
-                .setAudioBitRate(192000)
-                .addExtraArgs("-pix_fmt", "yuv420p")
-                .addExtraArgs("-tune", "stillimage")
-                .done();
-
-        FFmpegExecutor executor = new FFmpegExecutor(ffmpeg);
-        executor.createJob(builder).run();
-
-        */
-
-        return new UploadResponseDto(pictureEtag,audioEtag);
+    public UploadResponseDto upload(@RequestPart("picture") MultipartFile picture, @RequestPart("audio") MultipartFile audio)
+            throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        return uploadService.upload(picture,audio);
     }
 }

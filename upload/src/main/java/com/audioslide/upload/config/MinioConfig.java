@@ -35,13 +35,11 @@ public class MinioConfig {
         return args -> {
             for (String bucket : buckets) {
                 try {
-                    // Проверяем, существует ли бакет
                     boolean found = minioClient.bucketExists(
                             BucketExistsArgs.builder().bucket(bucket).build()
                     );
 
                     if (!found) {
-                        // Если бакета нет — создаем его
                         minioClient.makeBucket(
                                 MakeBucketArgs.builder().bucket(bucket).build()
                         );
