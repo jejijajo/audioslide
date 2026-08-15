@@ -33,5 +33,19 @@ services:
     command: server /data --console-address ":9001"
     restart: always
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq_server
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITUSER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITPASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+
 volumes:
   minio_data:
+  rabbitmq_data:
