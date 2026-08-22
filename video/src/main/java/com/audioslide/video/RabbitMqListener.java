@@ -1,0 +1,27 @@
+package com.audioslide.video;
+
+import io.minio.errors.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+@Component
+@RequiredArgsConstructor
+public class RabbitMqListener {
+
+    private final VideoService videoService;
+    private final ObjectMapper objectMapper;
+
+    @RabbitListener(queues = "${rabbit-listener.queue.name}")
+    public void receiveMessage(Message message) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        FileLinksEvent event = objectMapper.readValue(message.getBody(), FileLinksEvent.class);
+
+        videoService.createVideo(event);
+    }
+}

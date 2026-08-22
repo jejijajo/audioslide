@@ -8,11 +8,27 @@ services:
     build: ./upload
     ports:
       - "8082:8080"
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+    depends_on:
+      - rabbitmq
+      - minio
 
   video:
     build: ./video
     ports:
       - "8083:8080"
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+    depends_on:
+      - rabbitmq
+      - minio
 
   youtube:
     build: ./youtube
