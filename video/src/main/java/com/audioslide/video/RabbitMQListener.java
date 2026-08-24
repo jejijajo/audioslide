@@ -20,7 +20,7 @@ public class RabbitMQListener {
     private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = "${rabbit-listener.queue.name}")
-    public void receiveMessage(Message message) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void receiveMessage(Message message) throws Exception {
         FileLinksEvent event = objectMapper.readValue(message.getBody(), FileLinksEvent.class);
 
         videoService.createVideo(event);
