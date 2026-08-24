@@ -1,5 +1,6 @@
 package com.audioslide.video;
 
+import com.audioslide.video.event.FileLinksEvent;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
@@ -13,7 +14,7 @@ import java.security.NoSuchAlgorithmException;
 
 @Component
 @RequiredArgsConstructor
-public class RabbitMqListener {
+public class RabbitMQListener {
 
     private final VideoService videoService;
     private final ObjectMapper objectMapper;

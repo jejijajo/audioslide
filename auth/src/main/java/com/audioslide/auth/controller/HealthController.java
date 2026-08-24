@@ -8,5 +8,5 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthController {
 
     @GetMapping("/health")
-    public String health() {return "Video service is running...";}
+    public String health() {return "Auth service is running...";}
 }

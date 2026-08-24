@@ -18,3 +18,11 @@ minio:
 rabbit-listener:
   queue:
     name: upload_queue
+
+rabbit-producer:
+  exchange:
+    name: video_exchange
+  queue:
+    name: video_queue
+  routing-key:
+    name: "video-completed"
