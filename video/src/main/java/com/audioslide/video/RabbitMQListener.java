@@ -19,7 +19,7 @@ public class RabbitMQListener {
     private final VideoService videoService;
     private final ObjectMapper objectMapper;
 
-    @RabbitListener(queues = "${rabbit-listener.queue.name}")
+    @RabbitListener(queues = "${rabbit-listener.queue.name}", containerFactory = "rabbitListenerContainerFactory")
     public void receiveMessage(Message message) throws Exception {
         FileLinksEvent event = objectMapper.readValue(message.getBody(), FileLinksEvent.class);
 

@@ -13,9 +13,13 @@ services:
       RABBIT_PASSWORD: ${RABBITPASSWORD}
       MINIO_ACCESS_KEY: ${MINIOROOTUSER}
       MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://upload-db:5432/upload
+      SPRING_DATASOURCE_USERNAME: ${UPLOADDBUSER}
+      SPRING_DATASOURCE_PASSWORD: ${UPLOADDBPASSWORD}
     depends_on:
       - rabbitmq
       - minio
+      - upload-db
 
   video:
     build: ./video
@@ -34,6 +38,14 @@ services:
     build: ./youtube
     ports:
       - "8084:8080"
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+    depends_on:
+      - rabbitmq
+      - minio
 
   minio:
     image: minio/minio:latest
@@ -61,7 +73,20 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  upload-db:
+    image: postgres:16
+    container_name: upload_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: upload
+      POSTGRES_USER: ${UPLOADDBUSER}
+      POSTGRES_PASSWORD: ${UPLOADDBPASSWORD}
+    volumes:
+      - upload_db_data:/var/lib/postgresql/data
+    restart: always
 
 volumes:
   minio_data:
   rabbitmq_data:
+  upload_db_data:

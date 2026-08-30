@@ -3,6 +3,7 @@ package com.audioslide.video.config;
 
 import com.audioslide.video.event.FileLinksEvent;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.DefaultJacksonJavaTypeMapper;
@@ -47,7 +48,7 @@ public class RabbitMQConfig {
         DefaultJacksonJavaTypeMapper typeMapper = new DefaultJacksonJavaTypeMapper();
         typeMapper.setTrustedPackages("com.audioslide.*.dto", "com.audioslide.*.event");
         typeMapper.setIdClassMapping(Map.of(
-                "com.audioslide.upload.dto.UploadResponseDto", FileLinksEvent.class
+                "com.audioslide.upload.event.FileLinksEvent", FileLinksEvent.class
         ));
         converter.setJavaTypeMapper(typeMapper);
         return converter;
@@ -60,5 +61,15 @@ public class RabbitMQConfig {
         template.setExchange(EXCHANGE_NAME);
         template.setRoutingKey(ROUTING_KEY_NAME);
         return template;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter jsonMessageConverter) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jsonMessageConverter);
+        return factory;
     }
 }

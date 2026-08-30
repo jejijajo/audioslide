@@ -50,7 +50,7 @@ public class VideoService {
 
         // SEND MESSAGE TO QUEUE
 
-        rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey));
+        rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey,fileLinksEvent.videoId()));
 
         // DELETE TEMP FILES
 

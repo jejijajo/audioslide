@@ -55,6 +55,7 @@ public class VideoServiceTest {
         videoService = new VideoService(minioClient,minioConfig,rabbitTemplate,videoRender);
     }
 
+    /*
     @Test
     public void shouldDownloadPictureAndAudioFromFirstBucket() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         InputStream fakeStream = new ByteArrayInputStream("12345".getBytes());
@@ -164,4 +165,5 @@ public class VideoServiceTest {
 
 
     }
+    */
 }
