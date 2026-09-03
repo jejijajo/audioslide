@@ -1,6 +1,6 @@
 package com.audioslide.youtube;
 
-import com.audioslide.youtube.event.VideoCreatedEvent;
+import com.audioslide.youtube.event.YoutubeDataCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,7 +15,7 @@ public class RabbitMQListener {
 
     @RabbitListener(queues = "${rabbit-listener.queue.name}")
     public void receiveMessage(Message message) throws Exception {
-        VideoCreatedEvent event = objectMapper.readValue(message.getBody(), VideoCreatedEvent.class);
-        System.out.println(event.videoObjectKey());
+        YoutubeDataCreatedEvent event = objectMapper.readValue(message.getBody(), YoutubeDataCreatedEvent.class);
+        System.out.println(event);
     }
 }

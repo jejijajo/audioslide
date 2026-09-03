@@ -15,3 +15,6 @@ minio:
     - raw-uploads
     - media-output
 
+rabbit-listener:
+  queue:
+    name: youtube_upload_queue
