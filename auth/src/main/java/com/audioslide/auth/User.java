@@ -42,5 +42,4 @@ public class User {
         this.createdAt = Instant.now();
     }
 
-    // getters/setters
 }
