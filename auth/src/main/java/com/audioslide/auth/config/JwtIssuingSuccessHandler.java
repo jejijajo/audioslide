@@ -4,6 +4,7 @@ import com.audioslide.auth.entity.User;
 import com.audioslide.auth.service.JwtService;
 import com.audioslide.auth.service.RefreshTokenService;
 import com.audioslide.auth.service.UserService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +36,11 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
         String accessToken = jwtService.createToken(user.getId(),user.getEmail(),user.getRoles());
         String refreshToken = refreshTokenService.issue(user);
 
+        Claims claims = jwtService.validateAndParse(accessToken);
+
         res.setContentType("application/json");
         res.getWriter().write("""
-            {"accessToken":"%s","refreshToken":"%s"}
-            """.formatted(accessToken, refreshToken));
+            {"accessToken":"%s","refreshToken":"%s", "id":"%s"}
+            """.formatted(accessToken, refreshToken,claims.getSubject()));
     }
 }

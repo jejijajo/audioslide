@@ -2,41 +2,54 @@ package com.audioslide.auth.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Set;
 
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    @Value("${jwt.private-key}")
+    private String privateKeyPem;
+
+    @Value("${jwt.public-key}")
+    private String publicKeyPem;
 
     @Value("${jwt.access-token-ttl}")
     private long validityInMilliseconds;
 
-    private SecretKey signingKey;
+    private PrivateKey privateKey;
+    private PublicKey publicKey;
 
     @PostConstruct
-    public void init() {
-        try {
-            byte[] keyBytes = MessageDigest.getInstance("SHA-256").digest(secretKey.getBytes(StandardCharsets.UTF_8));
-            signingKey = Keys.hmacShaKeyFor(keyBytes);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
+    public void init() throws Exception {
+        String privatePem = privateKeyPem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("\\n", "")
+                .replaceAll("\\s", "");
+        byte[] privateKeyBytes = Base64.getDecoder().decode(privatePem);
+        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(privateKeyBytes);
+        privateKey = KeyFactory.getInstance("RSA").generatePrivate(privateSpec);
+
+        String publicPem = publicKeyPem
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replace("\\n", "")
+                .replaceAll("\\s", "");
+        byte[] publicKeyBytes = Base64.getDecoder().decode(publicPem);
+        X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(publicKeyBytes);
+        publicKey = KeyFactory.getInstance("RSA").generatePublic(publicSpec);
     }
 
     public String createToken(Long userId, String email, Set<String> roles) {
-
         Date now = new Date();
 
         return Jwts.builder()
@@ -45,16 +58,16 @@ public class JwtService {
                 .claim("roles", roles)
                 .issuer("auth-service")
                 .issuedAt(now)
-                .expiration(new Date(now.getTime()+validityInMilliseconds))
-                .signWith(signingKey)
+                .expiration(new Date(now.getTime() + validityInMilliseconds))
+                .signWith(privateKey)
                 .compact();
     }
 
     public Claims validateAndParse(String token) {
         return Jwts.parser()
-                .setSigningKey(signingKey)
+                .verifyWith(publicKey)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
