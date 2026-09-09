@@ -8,4 +8,7 @@ public class HealthController {
 
     @GetMapping("/health")
     public String health() {return "Upload service is running...";}
+
+    @GetMapping("/check")
+    public String check() {return "success";}
 }

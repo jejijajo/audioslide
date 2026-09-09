@@ -43,3 +43,6 @@ rabbit:
 rabbit-listener:
   queue:
     name: video_queue
+
+jwt:
+  public-key: ${JWT_PUBLIC_KEY}

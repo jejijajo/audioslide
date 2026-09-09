@@ -1,6 +1,6 @@
 package com.audioslide.upload.controller;
 
-import com.audioslide.upload.UploadService;
+import com.audioslide.upload.service.UploadService;
 import com.audioslide.upload.dto.UploadRequestDto;
 import com.audioslide.upload.dto.UploadResponseDto;
 import io.minio.errors.*;

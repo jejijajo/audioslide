@@ -1,5 +1,6 @@
-package com.audioslide.upload;
+package com.audioslide.upload.service;
 
+import com.audioslide.upload.VideoRepository;
 import com.audioslide.upload.dto.UploadRequestDto;
 import com.audioslide.upload.dto.UploadResponseDto;
 import com.audioslide.upload.entity.VideoEntity;
