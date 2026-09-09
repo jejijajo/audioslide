@@ -1,7 +1,8 @@
 package com.audioslide.auth.config;
 
-import com.audioslide.auth.User;
+import com.audioslide.auth.entity.User;
 import com.audioslide.auth.service.JwtService;
+import com.audioslide.auth.service.RefreshTokenService;
 import com.audioslide.auth.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res,
@@ -30,9 +32,12 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
 
         User user = userService.findOrCreateByEmail(email, name, googleId);
 
-        String jwt = jwtService.createToken(user.getId(),user.getEmail(),user.getRoles());
+        String accessToken = jwtService.createToken(user.getId(),user.getEmail(),user.getRoles());
+        String refreshToken = refreshTokenService.issue(user);
 
-        res.setContentType("text/plain");
-        res.getWriter().write(jwt);
+        res.setContentType("application/json");
+        res.getWriter().write("""
+            {"accessToken":"%s","refreshToken":"%s"}
+            """.formatted(accessToken, refreshToken));
     }
 }

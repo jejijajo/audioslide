@@ -1,7 +1,7 @@
 package com.audioslide.auth.service;
 
-import com.audioslide.auth.User;
-import com.audioslide.auth.UserRepository;
+import com.audioslide.auth.entity.User;
+import com.audioslide.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

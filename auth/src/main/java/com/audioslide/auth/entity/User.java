@@ -1,4 +1,4 @@
-package com.audioslide.auth;
+package com.audioslide.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -36,6 +36,9 @@ public class User {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<RefreshToken> refreshTokens = new HashSet<>();
 
     @PrePersist
     public void prePersist() {
