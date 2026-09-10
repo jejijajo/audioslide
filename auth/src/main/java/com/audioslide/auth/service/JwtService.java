@@ -63,6 +63,20 @@ public class JwtService {
                 .compact();
     }
 
+    public String createServiceToken(String serviceName, Set<String> scopes) {
+        Date now = new Date();
+
+        return Jwts.builder()
+                .subject(serviceName)
+                .claim("type", "service")
+                .claim("scopes", scopes)
+                .issuer("auth-service")
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + 5 * 60 * 1000))
+                .signWith(privateKey)
+                .compact();
+    }
+
     public Claims validateAndParse(String token) {
         return Jwts.parser()
                 .verifyWith(publicKey)

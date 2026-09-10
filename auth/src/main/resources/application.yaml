@@ -32,4 +32,9 @@ jwt:
   access-token-ttl: 900000
   refresh-token-ttl: 604800000
 
+internal:
+  clients:
+    service-b:
+      secret: ${SERVICE_YOUTUBE_SECRET}
+      scopes: internal.users.read
 

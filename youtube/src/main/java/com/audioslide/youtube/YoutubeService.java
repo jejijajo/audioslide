@@ -8,6 +8,7 @@ import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
 import com.google.api.services.youtube.model.VideoStatus;
 import io.minio.GetObjectArgs;
+import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
@@ -44,11 +45,24 @@ public class YoutubeService {
 
         //download pic+vid from s3
 
-        minioClient.getObject(
+        try (GetObjectResponse thumbnailStream = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(minioConfig.getBuckets().get(1))
                         .object(youtubeDataCreatedEvent.thumbnailS3Key())
-                        .build()
-        );
+                        .build())) {
+
+            byte[] thumbnailBytes = thumbnailStream.readAllBytes();
+        }
+
+        try (GetObjectResponse videoStream = minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(minioConfig.getBuckets().get(0))
+                        .object(youtubeDataCreatedEvent.videoS3Key())
+                        .build())) {
+
+            byte[] videoBytes = videoStream.readAllBytes();
+        }
+
+        // upload to channel
     }
 }
