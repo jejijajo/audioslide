@@ -6,6 +6,9 @@ import com.audioslide.upload.dto.UploadResponseDto;
 import io.minio.errors.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -26,8 +29,9 @@ public class UploadController {
     public UploadResponseDto upload(
             @RequestPart("picture") MultipartFile picture,
             @RequestPart("audio") MultipartFile audio,
-            @RequestPart("metadata") @Valid UploadRequestDto metadata)
+            @RequestPart("metadata") @Valid UploadRequestDto metadata,
+            @AuthenticationPrincipal String userId)
             throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        return uploadService.upload(picture,audio,metadata);
+        return uploadService.upload(picture,audio,metadata,Long.parseLong(userId));
     }
 }
