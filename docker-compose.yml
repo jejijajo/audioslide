@@ -26,6 +26,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://upload-db:5432/upload
       SPRING_DATASOURCE_USERNAME: ${UPLOADDBUSER}
       SPRING_DATASOURCE_PASSWORD: ${UPLOADDBPASSWORD}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
     depends_on:
       - rabbitmq
       - minio
