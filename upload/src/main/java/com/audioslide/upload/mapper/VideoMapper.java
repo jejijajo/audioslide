@@ -27,6 +27,7 @@ public final class VideoMapper {
 
         return new YoutubeDataCreatedEvent(
                 videoEntity.getId(),
+                videoEntity.getUserId(),
                 videoEntity.getTitle(),
                 videoEntity.getDescription(),
                 videoEntity.getPrivacyStatus(),

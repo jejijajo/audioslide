@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record YoutubeDataCreatedEvent(
         UUID id,
+        Long userId,
         String title,
         String description,
         PrivacyStatus privacyStatus,
