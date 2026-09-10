@@ -2,6 +2,7 @@ package com.audioslide.upload;
 
 
 import com.audioslide.upload.event.VideoCreatedEvent;
+import com.audioslide.upload.service.UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

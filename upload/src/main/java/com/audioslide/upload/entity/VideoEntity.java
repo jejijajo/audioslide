@@ -23,6 +23,10 @@ public class VideoEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+
+    @Column(nullable = false)
+    private Long userId;
+
     @Column(nullable = false)
     private String title;
 

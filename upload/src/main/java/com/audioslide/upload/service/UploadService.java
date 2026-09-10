@@ -1,5 +1,6 @@
-package com.audioslide.upload;
+package com.audioslide.upload.service;
 
+import com.audioslide.upload.VideoRepository;
 import com.audioslide.upload.dto.UploadRequestDto;
 import com.audioslide.upload.dto.UploadResponseDto;
 import com.audioslide.upload.entity.VideoEntity;
@@ -44,7 +45,8 @@ public class UploadService {
     public UploadResponseDto upload(
             MultipartFile picture,
             MultipartFile audio,
-            UploadRequestDto metadata
+            UploadRequestDto metadata,
+            Long userId
     ) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
         String pictureObjectKey = minioClient.putObject(
                 PutObjectArgs.builder()
@@ -65,6 +67,7 @@ public class UploadService {
         ).object();
 
         VideoEntity entity = VideoMapper.uploadRequestDtoToVideoEntity(metadata);
+        entity.setUserId(userId);
         entity.setThumbnailS3Key(pictureObjectKey);
 
         VideoEntity saved = videoRepository.save(entity);
