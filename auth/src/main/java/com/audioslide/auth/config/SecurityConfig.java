@@ -22,7 +22,9 @@ public class SecurityConfig {
             JwtAuthFilter jwtAuthFilter,
             OAuth2AuthorizationRequestResolver authorizationRequestResolver) throws Exception {
         http
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/internal/token").permitAll()
                         .requestMatchers("/login/**", "/oauth2/**", "/refresh", "/health").permitAll()
                         .requestMatchers("/internal/**").hasRole("SERVICE")
                         .anyRequest().authenticated()
