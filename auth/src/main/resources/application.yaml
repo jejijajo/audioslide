@@ -13,6 +13,7 @@ spring:
               - profile
               - email
               - https://www.googleapis.com/auth/youtube.upload
+              - https://www.googleapis.com/auth/youtube.readonly
             authorization-grant-type: authorization_code
   datasource:
     url: jdbc:postgresql://localhost:5432/auth_db
@@ -34,7 +35,7 @@ jwt:
 
 internal:
   clients:
-    service-b:
+    youtube-service:
       secret: ${SERVICE_YOUTUBE_SECRET}
       scopes: internal.users.read
 
