@@ -38,3 +38,7 @@ internal:
       secret: ${SERVICE_YOUTUBE_SECRET}
       scopes: internal.users.read
 
+security:
+  encryption:
+    key: ${GOOGLE_TOKEN_ENC_KEY}
+    salt: ${GOOGLE_TOKEN_ENC_SALT}
