@@ -23,10 +23,10 @@ public class GoogleToken {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(name = "access_token", nullable = false)
+    @Column(name = "encrypted_access_token", nullable = false, length = 2048)
     private String encryptedAccessToken;
 
-    @Column(name = "encrypted_refresh_token", nullable = false)
+    @Column(name = "encrypted_refresh_token", nullable = false, length = 2048)
     private String encryptedRefreshToken;
 
     @Column(name = "expires_at", nullable = false)
