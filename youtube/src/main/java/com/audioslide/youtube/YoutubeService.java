@@ -22,7 +22,6 @@ import java.security.NoSuchAlgorithmException;
 @RequiredArgsConstructor
 public class YoutubeService {
 
-    private final YouTube youTube;
     private final MinioClient minioClient;
     private final MinioConfig minioConfig;
 

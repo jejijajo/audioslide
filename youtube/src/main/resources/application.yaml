@@ -18,3 +18,11 @@ minio:
 rabbit-listener:
   queue:
     name: youtube_upload_queue
+
+auth:
+  service:
+    url: http://auth:8080
+
+internal:
+  client-id: youtube-service
+  secret: ${SERVICE_YOUTUBE_SECRET}

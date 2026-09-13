@@ -1,4 +1,4 @@
-package com.audioslide.auth.dto;
+package com.audioslide.youtube.dto;
 
 import java.time.Instant;
 
