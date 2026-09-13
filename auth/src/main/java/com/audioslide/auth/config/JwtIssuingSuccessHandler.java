@@ -62,6 +62,7 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
             String channelId = googleTokenService.fetchChannelId(googleAccessToken.getTokenValue());
             googleTokenService.addToken(user, googleAccessToken, refreshTokenValue, googleAccessToken.getExpiresAt(), channelId);
         } catch (Exception e) {
+            e.printStackTrace();
             res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to store Google token");
             return;
         }
