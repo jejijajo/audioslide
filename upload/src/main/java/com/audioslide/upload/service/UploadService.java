@@ -13,6 +13,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UploadService {
@@ -82,7 +84,11 @@ public class UploadService {
 
     @Transactional
     public void sendDataToYoutubeService(VideoCreatedEvent videoCreatedEvent) {
-        VideoEntity videoEntity = videoRepository.getById(videoCreatedEvent.videoId());
+        VideoEntity videoEntity = videoRepository.findById(videoCreatedEvent.videoId())
+                .orElseThrow(() -> new RuntimeException("exception"));
+
+        log.info("Loaded videoEntity: id={}, userId={}", videoEntity.getId(), videoEntity.getUserId());
+
         videoEntity.setVideoStatus(VideoStatus.READY);
         videoEntity.setVideoS3Key(videoCreatedEvent.videoObjectKey());
         videoRepository.save(videoEntity);
