@@ -13,9 +13,12 @@ public class RabbitMQListener {
 
     private final ObjectMapper objectMapper;
 
+    private final YoutubeService youtubeService;
+
     @RabbitListener(queues = "${rabbit-listener.queue.name}")
     public void receiveMessage(Message message) throws Exception {
         YoutubeDataCreatedEvent event = objectMapper.readValue(message.getBody(), YoutubeDataCreatedEvent.class);
+        youtubeService.uploadVideo(event);
         System.out.println(event);
     }
 }
