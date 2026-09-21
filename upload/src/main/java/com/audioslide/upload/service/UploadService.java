@@ -7,10 +7,12 @@ import com.audioslide.upload.entity.VideoEntity;
 import com.audioslide.upload.entity.VideoStatus;
 import com.audioslide.upload.event.FileLinksEvent;
 import com.audioslide.upload.event.VideoCreatedEvent;
+import com.audioslide.upload.event.VideoPublishedEvent;
 import com.audioslide.upload.event.YoutubeDataCreatedEvent;
 import com.audioslide.upload.mapper.VideoMapper;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +98,27 @@ public class UploadService {
         YoutubeDataCreatedEvent youtubeEvent = VideoMapper.videoEntityToYoutubeDataCreatedEvent(videoEntity);
 
         rabbitTemplate.convertAndSend(EXCHANGE_NAME, YOUTUBE_ROUTING_KEY, youtubeEvent);
+    }
+
+    @Transactional
+    public void markAsPublished(VideoPublishedEvent event) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        VideoEntity videoEntity = videoRepository.findById(event.id())
+                .orElseThrow(() -> new RuntimeException("exception"));
+
+        videoEntity.setYoutubeVideoLink(event.YoutubeVideoLink());
+        videoEntity.setVideoStatus(VideoStatus.PUBLISHED);
+        deleteVideoFromS3(videoEntity.getVideoS3Key());
+        videoEntity.setVideoS3Key(null);
+        videoRepository.save(videoEntity);
+    }
+
+    private void deleteVideoFromS3(String videoS3Key) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                        .bucket("media-output")
+                        .object(videoS3Key)
+                        .build()
+        );
     }
 
 }
