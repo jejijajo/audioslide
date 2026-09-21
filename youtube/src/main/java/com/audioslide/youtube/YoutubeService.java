@@ -4,9 +4,11 @@ package com.audioslide.youtube;
 import com.audioslide.youtube.config.MinioConfig;
 import com.audioslide.youtube.config.YoutubeClientFactory;
 import com.audioslide.youtube.dto.YoutubeTokenResponseDto;
+import com.audioslide.youtube.event.VideoPublishedEvent;
 import com.audioslide.youtube.event.YoutubeDataCreatedEvent;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoSnippet;
@@ -17,6 +19,7 @@ import io.minio.MinioClient;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 
@@ -32,6 +35,8 @@ public class YoutubeService {
 
     private final MinioClient minioClient;
     private final MinioConfig minioConfig;
+
+    private final RabbitTemplate rabbitTemplate;
 
     private final AuthServiceClient authServiceClient;
 
@@ -49,8 +54,14 @@ public class YoutubeService {
         videoSnippet.setTags(youtubeDataCreatedEvent.tags());
         videoSnippet.setCategoryId(String.valueOf(youtubeDataCreatedEvent.categoryId()));
 
+
+
         VideoStatus videoStatus = new VideoStatus();
         videoStatus.setPrivacyStatus(youtubeDataCreatedEvent.privacyStatus().getValue());
+        if (youtubeDataCreatedEvent.publishAt() != null) {
+            videoStatus.setPublishAt(new DateTime(youtubeDataCreatedEvent.publishAt().toEpochMilli()));
+        }
+
 
         video.setSnippet(videoSnippet);
         video.setStatus(videoStatus);
@@ -95,13 +106,22 @@ public class YoutubeService {
         Video uploadedVideo = videoInsert.execute();
         String videoId = uploadedVideo.getId();
 
-        InputStreamContent thumbnailContent = new InputStreamContent(
-                "image/jpeg", new ByteArrayInputStream(thumbnailBytes));
-        thumbnailContent.setLength(thumbnailBytes.length);
+        // send success message to upload service
 
-        youtube.thumbnails()
-                .set(videoId, thumbnailContent)
-                .execute();
+        String videoUrl = "https://youtu.be/" + videoId;
+
+        rabbitTemplate.convertAndSend(
+                new VideoPublishedEvent(youtubeDataCreatedEvent.id(),videoUrl));
+
+        try {
+            InputStreamContent thumbnailContent = new InputStreamContent(
+                    "image/jpeg", new ByteArrayInputStream(thumbnailBytes));
+            thumbnailContent.setLength(thumbnailBytes.length);
+            youtube.thumbnails().set(videoId, thumbnailContent).execute();
+        } catch (Exception e) {
+            log.warn("Failed to set thumbnail for {}", videoId, e);
+        }
+
     }
 
 }
