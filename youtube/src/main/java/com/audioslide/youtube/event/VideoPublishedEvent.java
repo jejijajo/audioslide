@@ -1,4 +1,4 @@
-package com.audioslide.upload.event;
+package com.audioslide.youtube.event;
 
 import java.util.UUID;
 
