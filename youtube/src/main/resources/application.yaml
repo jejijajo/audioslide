@@ -15,6 +15,14 @@ minio:
     - raw-uploads
     - media-output
 
+rabbit:
+  exchange:
+    name: youtube_exchange
+  queues:
+    published:
+      name: youtube_published_queue
+      routing-key: "youtube-video-published"
+
 rabbit-listener:
   queue:
     name: youtube_upload_queue
@@ -26,3 +34,5 @@ auth:
 internal:
   client-id: youtube-service
   secret: ${SERVICE_YOUTUBE_SECRET}
+
+
