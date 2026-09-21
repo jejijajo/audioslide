@@ -63,6 +63,8 @@ public class VideoEntity {
 
     private String videoS3Key;
 
+    @Column(name = "youtube_video_link" ,nullable = true)
+    private String youtubeVideoLink;
 
     @PrePersist
     protected void onCreate() {

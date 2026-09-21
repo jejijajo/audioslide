@@ -30,6 +30,9 @@ public class RabbitMQConfig {
     @Value("${rabbit.queues.youtube.routing-key}")
     private String YOUTUBE_ROUTING_KEY;
 
+
+
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE_NAME, true, false);
@@ -44,6 +47,8 @@ public class RabbitMQConfig {
     public Queue youtubeQueue() {
         return QueueBuilder.durable(YOUTUBE_QUEUE_NAME).build();
     }
+
+
 
     @Bean
     public Binding uploadBinding(Queue uploadQueue, TopicExchange exchange) {

@@ -2,7 +2,7 @@ package com.audioslide.upload.entity;
 
 public enum VideoStatus {
 
-    READY("ready"), UPLOADED("uploaded"), GENERATING("generating");
+    READY("ready"), UPLOADED("uploaded"), GENERATING("generating"), PUBLISHED("published");
 
     private final String value;
 
