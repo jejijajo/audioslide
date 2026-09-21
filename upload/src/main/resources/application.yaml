@@ -41,8 +41,10 @@ rabbit:
       routing-key: "youtube-upload-requested"
 
 rabbit-listener:
-  queue:
+  video-queue:
     name: video_queue
+  youtube-published-queue:
+    name: youtube_published_queue
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}

@@ -1,4 +1,8 @@
 package com.audioslide.upload.event;
 
-public record VideoPublishedEvent() {
+import java.util.UUID;
+
+public record VideoPublishedEvent(
+        UUID id,
+        String YoutubeVideoLink) {
 }

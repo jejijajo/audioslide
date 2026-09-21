@@ -2,6 +2,7 @@ package com.audioslide.upload;
 
 
 import com.audioslide.upload.event.VideoCreatedEvent;
+import com.audioslide.upload.event.VideoPublishedEvent;
 import com.audioslide.upload.service.UploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.Message;
@@ -17,9 +18,17 @@ public class RabbitMQListener {
     private final UploadService uploadService;
 
 
-    @RabbitListener(queues = "${rabbit-listener.queue.name}",containerFactory = "rabbitListenerContainerFactory")
-    public void receiveMessage(Message message) throws Exception {
+    @RabbitListener(queues = "${rabbit-listener.video-queue.name}",
+            containerFactory = "rabbitListenerContainerFactory")
+    public void onVideoCreated(Message message) throws Exception {
         VideoCreatedEvent event = objectMapper.readValue(message.getBody(), VideoCreatedEvent.class);
         uploadService.sendDataToYoutubeService(event);
+    }
+
+    @RabbitListener(queues = "${rabbit-listener.youtube-published-queue.name}",
+            containerFactory = "rabbitListenerContainerFactory")
+    public void onVideoPublished(Message message) throws Exception {
+        VideoPublishedEvent event = objectMapper.readValue(message.getBody(), VideoPublishedEvent.class);
+        uploadService.markAsPublished(event);
     }
 }
