@@ -4,10 +4,7 @@ import com.audioslide.video.config.MinioConfig;
 import com.audioslide.video.event.FileLinksEvent;
 import com.audioslide.video.event.VideoCreatedEvent;
 import com.audioslide.video.render.VideoRender;
-import io.minio.GetObjectArgs;
-import io.minio.GetObjectResponse;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+import io.minio.*;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -52,7 +49,9 @@ public class VideoService {
 
         rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey,fileLinksEvent.videoId()));
 
-        // DELETE TEMP FILES
+        // DELETE TEMP FILES + AUDIO IN S3
+
+        deleteAudioFile(fileLinksEvent.audioObjectKey());
 
         Files.deleteIfExists(tempPicture);
         Files.deleteIfExists(tempAudio);
@@ -84,5 +83,14 @@ public class VideoService {
                         .contentType("video/mp4")
                         .build()
         ).object();
+    }
+
+    private void deleteAudioFile(String S3Key) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                        .bucket(minioConfig.getBuckets().get(0))
+                        .object(S3Key)
+                        .build()
+        );
     }
 }
