@@ -1,10 +1,14 @@
 package com.audioslide.youtube.event;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record YoutubeDataCreatedEvent(
         UUID id,
         Long userId,
