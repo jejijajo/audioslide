@@ -20,16 +20,22 @@ public class JwtValidator {
     private PublicKey publicKey;
 
     @PostConstruct
-    public void init() throws Exception {
-        String pem = publicKeyPem
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replace("\\n", "")
-                .replaceAll("\\s", "");
+    public void init() {
 
-        byte[] keyBytes = Base64.getDecoder().decode(pem);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
+        try {
+            String pem = publicKeyPem
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replace("\\n", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(pem);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            publicKey = KeyFactory.getInstance("RSA").generatePublic(spec);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load JWT public key (check JWT_PUBLIC_KEY)", e);
+        }
+
     }
 
     public Claims validateAndParse(String token) {
