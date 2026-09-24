@@ -14,8 +14,11 @@ services:
       SERVICE_YOUTUBE_SECRET: ${SERVICE_YOUTUBE_SECRET}
       GOOGLE_TOKEN_ENC_KEY: ${GOOGLE_TOKEN_ENC_KEY}
       GOOGLE_TOKEN_ENC_SALT: ${GOOGLE_TOKEN_ENC_SALT}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
       - auth-db
+    labels:
+      logging: "alloy"
 
   upload:
     build: ./upload
@@ -30,10 +33,13 @@ services:
       SPRING_DATASOURCE_USERNAME: ${UPLOADDBUSER}
       SPRING_DATASOURCE_PASSWORD: ${UPLOADDBPASSWORD}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
       - rabbitmq
       - minio
       - upload-db
+    labels:
+      logging: "alloy"
 
   video:
     build: ./video
@@ -44,9 +50,12 @@ services:
       RABBIT_PASSWORD: ${RABBITPASSWORD}
       MINIO_ACCESS_KEY: ${MINIOROOTUSER}
       MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
       - rabbitmq
       - minio
+    labels:
+      logging: "alloy"
 
   youtube:
     build: ./youtube
@@ -58,9 +67,12 @@ services:
       MINIO_ACCESS_KEY: ${MINIOROOTUSER}
       MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
       SERVICE_YOUTUBE_SECRET: ${SERVICE_YOUTUBE_SECRET}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
       - rabbitmq
       - minio
+    labels:
+      logging: "alloy"
 
   minio:
     image: minio/minio:latest
@@ -112,10 +124,41 @@ services:
       POSTGRES_PASSWORD: ${AUTHDBPASSWORD}
     volumes:
       - auth_db_data:/var/lib/postgresql/data
-    restart: always  
+    restart: always
+
+  loki:
+    image: grafana/loki:3.2.0
+    command: -config.file=/etc/loki/local-config.yaml
+    ports: ["3100:3100"]
+    volumes: [loki-data:/loki]
+
+  alloy:
+    image: grafana/alloy:latest  
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports: ["12345:12345"]      
+    volumes:
+      - ./logs-and-metrics/config.alloy:/etc/alloy/config.alloy
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: [loki]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports: ["3000:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./logs-and-metrics/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on: [loki]
 
 volumes:
   minio_data:
   rabbitmq_data:
   upload_db_data:
   auth_db_data:
+  loki-data:
+  grafana-data:
+  alloy-data:
