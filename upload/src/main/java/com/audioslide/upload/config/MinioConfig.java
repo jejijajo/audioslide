@@ -4,6 +4,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Setter
 @Configuration
+@Slf4j
 @ConfigurationProperties(prefix = "minio")
 public class MinioConfig {
 
@@ -42,12 +44,12 @@ public class MinioConfig {
                         minioClient.makeBucket(
                                 MakeBucketArgs.builder().bucket(bucket).build()
                         );
-                        System.out.printf("Bucket '%s' successfully created.%n", bucket);
+                        log.info("Bucket '{}' created", bucket);
                     } else {
-                        System.out.printf("Bucket '%s' already exists.%n", bucket);
+                        log.info("Bucket '{}' already exists", bucket);
                     }
                 } catch (Exception e) {
-                    System.err.printf("Failed to check/create bucket '%s': %s%n", bucket, e.getMessage());
+                    throw new IllegalStateException("Failed to check/create bucket '"+bucket+"'", e);
                 }
             }
         };

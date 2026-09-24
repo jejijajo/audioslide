@@ -65,13 +65,15 @@ public class UploadService {
 
         rabbitTemplate.convertAndSend(EXCHANGE_NAME, UPLOAD_ROUTING_KEY, fileLinksEvent);
 
+        log.info("Upload accepted: videoId={}, userId={}", saved.getId(), userId);
+
         return response;
     }
 
     private String putToMinio(String prefix, MultipartFile file) {
         String key = prefix + UUID.randomUUID() + "_" + file.getOriginalFilename();
         try {
-            return minioClient.putObject(
+            String objectKey = minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket("raw-uploads")
                             .object(key)
@@ -79,6 +81,8 @@ public class UploadService {
                             .contentType(file.getContentType())
                             .build()
             ).object();
+            log.debug("File stored in MinIO: key={}, size={}", objectKey, file.getSize());
+            return objectKey;
         } catch (Exception e) {
             throw new StorageException("Failed to upload to MinIO: key=" + key, e);
         }
@@ -96,6 +100,9 @@ public class UploadService {
         YoutubeDataCreatedEvent youtubeEvent = VideoMapper.videoEntityToYoutubeDataCreatedEvent(videoEntity);
 
         rabbitTemplate.convertAndSend(EXCHANGE_NAME, YOUTUBE_ROUTING_KEY, youtubeEvent);
+
+        log.info("Video ready, sent to youtube service: videoId={}, userId={}",
+                videoEntity.getId(), videoEntity.getUserId());
     }
 
     @Transactional
@@ -108,6 +115,8 @@ public class UploadService {
         deleteVideoFromS3(videoEntity.getVideoS3Key());
         videoEntity.setVideoS3Key(null);
         videoRepository.save(videoEntity);
+
+        log.info("Video published: videoId={}", videoEntity.getId());
     }
 
     private void deleteVideoFromS3(String videoS3Key) {
@@ -118,6 +127,7 @@ public class UploadService {
                             .object(videoS3Key)
                             .build()
             );
+            log.debug("Video removed from MinIO: key={}", videoS3Key);
         } catch (Exception e) {
             throw new StorageException("Failed to delete video from MiniO: key=" + videoS3Key, e);
         }
