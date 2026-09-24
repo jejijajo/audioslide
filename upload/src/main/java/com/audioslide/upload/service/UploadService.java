@@ -9,6 +9,8 @@ import com.audioslide.upload.event.FileLinksEvent;
 import com.audioslide.upload.event.VideoCreatedEvent;
 import com.audioslide.upload.event.VideoPublishedEvent;
 import com.audioslide.upload.event.YoutubeDataCreatedEvent;
+import com.audioslide.upload.exception.StorageException;
+import com.audioslide.upload.exception.VideoNotFoundException;
 import com.audioslide.upload.mapper.VideoMapper;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -22,9 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 @Slf4j
@@ -51,24 +50,9 @@ public class UploadService {
             MultipartFile audio,
             UploadRequestDto metadata,
             Long userId
-    ) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        String pictureObjectKey = minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("raw-uploads")
-                        .object("pictures/" + UUID.randomUUID() + "_" + picture.getOriginalFilename())
-                        .stream(picture.getInputStream(),picture.getSize(),-1)
-                        .contentType(picture.getContentType())
-                        .build()
-        ).object();
-
-        String audioObjectKey = minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket("raw-uploads")
-                        .object("audio/" + UUID.randomUUID() + "_" + audio.getOriginalFilename())
-                        .stream(audio.getInputStream(),audio.getSize(),-1)
-                        .contentType(audio.getContentType())
-                        .build()
-        ).object();
+    ) {
+        String pictureObjectKey = putToMinio("pictures/", picture);
+        String audioObjectKey = putToMinio("audio/", audio);
 
         VideoEntity entity = VideoMapper.uploadRequestDtoToVideoEntity(metadata);
         entity.setUserId(userId);
@@ -84,12 +68,26 @@ public class UploadService {
         return response;
     }
 
+    private String putToMinio(String prefix, MultipartFile file) {
+        String key = prefix + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        try {
+            return minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket("raw-uploads")
+                            .object(key)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build()
+            ).object();
+        } catch (Exception e) {
+            throw new StorageException("Failed to upload to MinIO: key=" + key, e);
+        }
+    }
+
     @Transactional
     public void sendDataToYoutubeService(VideoCreatedEvent videoCreatedEvent) {
         VideoEntity videoEntity = videoRepository.findById(videoCreatedEvent.videoId())
-                .orElseThrow(() -> new RuntimeException("exception"));
-
-        log.info("Loaded videoEntity: id={}, userId={}", videoEntity.getId(), videoEntity.getUserId());
+                .orElseThrow(() -> new VideoNotFoundException("Video not found, id: " + videoCreatedEvent.videoId()));
 
         videoEntity.setVideoStatus(VideoStatus.READY);
         videoEntity.setVideoS3Key(videoCreatedEvent.videoObjectKey());
@@ -101,9 +99,9 @@ public class UploadService {
     }
 
     @Transactional
-    public void markAsPublished(VideoPublishedEvent event) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public void markAsPublished(VideoPublishedEvent event) {
         VideoEntity videoEntity = videoRepository.findById(event.id())
-                .orElseThrow(() -> new RuntimeException("exception"));
+                .orElseThrow(() -> new VideoNotFoundException("Video not found, id: " + event.id()));
 
         videoEntity.setYoutubeVideoLink(event.YoutubeVideoLink());
         videoEntity.setVideoStatus(VideoStatus.PUBLISHED);
@@ -112,13 +110,19 @@ public class UploadService {
         videoRepository.save(videoEntity);
     }
 
-    private void deleteVideoFromS3(String videoS3Key) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        minioClient.removeObject(
-                RemoveObjectArgs.builder()
-                        .bucket("media-output")
-                        .object(videoS3Key)
-                        .build()
-        );
+    private void deleteVideoFromS3(String videoS3Key) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket("media-output")
+                            .object(videoS3Key)
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new StorageException("Failed to delete video from MiniO: key=" + videoS3Key, e);
+        }
+
+
     }
 
 }
