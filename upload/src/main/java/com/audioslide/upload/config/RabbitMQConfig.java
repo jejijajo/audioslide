@@ -1,6 +1,7 @@
 package com.audioslide.upload.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -81,6 +82,13 @@ public class RabbitMQConfig {
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setDefaultRequeueRejected(false);
+        factory.setAdviceChain(
+                RetryInterceptorBuilder.stateless()
+                        .maxRetries(3)
+                        .backOffOptions(1000, 2.0, 10000)
+                        .build()
+        );
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(new SimpleMessageConverter());
         return factory;
