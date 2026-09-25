@@ -5,5 +5,5 @@ import java.io.InputStream;
 import java.nio.file.Path;
 
 public interface VideoRender {
-    InputStream render(Path tempVideo, Path tempPicture, Path tempAudio) throws IOException;
+    InputStream render(Path tempVideo, Path tempPicture, Path tempAudio);
 }

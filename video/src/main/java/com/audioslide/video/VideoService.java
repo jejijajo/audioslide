@@ -3,6 +3,8 @@ package com.audioslide.video;
 import com.audioslide.video.config.MinioConfig;
 import com.audioslide.video.event.FileLinksEvent;
 import com.audioslide.video.event.VideoCreatedEvent;
+import com.audioslide.video.exception.StorageException;
+import com.audioslide.video.exception.VideoProcessingException;
 import com.audioslide.video.render.VideoRender;
 import io.minio.*;
 import io.minio.errors.*;
@@ -15,8 +17,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,70 +27,105 @@ public class VideoService {
     private final RabbitTemplate rabbitTemplate;
     private final VideoRender videoRender;
 
-    public void createVideo(FileLinksEvent fileLinksEvent) throws Exception{
+    public void createVideo(FileLinksEvent fileLinksEvent) {
 
         // GET FILES
 
         Path tempPicture = createFile("picture-", ".jpg", fileLinksEvent.pictureObjectKey());
         Path tempAudio = createFile("audio-", ".mp3", fileLinksEvent.audioObjectKey());
-        Path tempVideo = Files.createTempFile("video-", ".mp4");
+        Path tempVideo;
+        try {
+            tempVideo = Files.createTempFile("video-", ".mp4");
+        } catch (IOException e) {
+            cleanupQuietly(tempPicture, tempAudio);
+            throw new VideoProcessingException("Failed to create temp file for video", e);
+        }
 
-        String videoName = java.util.UUID.randomUUID() + ".mp4";
+        // MAKE VIDEO -> PUT IN S3 -> SEND MESSAGE IN RABBIT
 
-        // CREATE VIDEO
-
-        InputStream videoStream = videoRender.render(tempVideo,tempPicture,tempAudio);
-
-        // PUT VIDEO IN STORAGE
-
-        String videoObjectKey = sendToStorage(videoName,tempVideo,videoStream);
-
-        // SEND MESSAGE TO QUEUE
-
-        rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey,fileLinksEvent.videoId()));
-
-        // DELETE TEMP FILES + AUDIO IN S3
-
-        deleteAudioFile(fileLinksEvent.audioObjectKey());
-
-        Files.deleteIfExists(tempPicture);
-        Files.deleteIfExists(tempAudio);
-        Files.deleteIfExists(tempVideo);
-
+        try (InputStream videoStream = videoRender.render(tempVideo, tempPicture, tempAudio)) {
+            String videoName = java.util.UUID.randomUUID() + ".mp4";
+            String videoObjectKey = sendToStorage(videoName, tempVideo, videoStream);
+            rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey, fileLinksEvent.videoId()));
+            deleteAudioFile(fileLinksEvent.audioObjectKey());
+        } catch (IOException e) {
+            throw new VideoProcessingException("Failed to close video stream", e);
+        } finally {
+            cleanupQuietly(tempPicture, tempAudio, tempVideo);
+        }
     }
 
-    private Path createFile(String prefix, String suffix, String objectKey) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        GetObjectResponse file = minioClient.getObject(
+    private Path createFile(String prefix, String suffix, String objectKey) {
+
+        Path tempFile;
+        try {
+            tempFile = Files.createTempFile(prefix, suffix);
+        } catch (Exception e) {
+            throw new VideoProcessingException("Failed to create temp file", e);
+        }
+
+        try (GetObjectResponse file = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(minioConfig.getBuckets().getFirst())
                         .object(objectKey)
-                        .build()
-        );
+                        .build())) {
 
-        Path tempPicture = Files.createTempFile(prefix, suffix);
+            Files.copy(file, tempFile, StandardCopyOption.REPLACE_EXISTING);
 
-        Files.copy(file, tempPicture, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            cleanupQuietly(tempFile);
+            throw new VideoProcessingException(
+                    "Failed to download/copy file, key: " + objectKey, e);
+        }
 
-        return tempPicture;
+        return tempFile;
     }
 
-    private String sendToStorage(String videoName, Path tempVideo, InputStream videoStream) throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        return minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(minioConfig.getBuckets().get(1))
-                        .object(videoName)
-                        .stream(videoStream,Files.size(tempVideo),-1)
-                        .contentType("video/mp4")
-                        .build()
-        ).object();
+    private String sendToStorage(String videoName, Path tempVideo, InputStream videoStream) {
+        String objectKey;
+
+        try{
+            objectKey = minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(minioConfig.getBuckets().get(1))
+                            .object(videoName)
+                            .stream(videoStream,Files.size(tempVideo),-1)
+                            .contentType("video/mp4")
+                            .build()
+            ).object();
+
+        } catch(Exception e) {
+            throw new StorageException(
+                    "Failed to upload video to MiniO, videoName: " + videoName +
+                            ", bucket: " + minioConfig.getBuckets().get(1) ,e);
+        }
+
+        return objectKey;
     }
 
-    private void deleteAudioFile(String S3Key) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-        minioClient.removeObject(
-                RemoveObjectArgs.builder()
-                        .bucket(minioConfig.getBuckets().get(0))
-                        .object(S3Key)
-                        .build()
-        );
+    private void deleteAudioFile(String S3Key) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(minioConfig.getBuckets().getFirst())
+                            .object(S3Key)
+                            .build()
+            );
+        } catch(Exception e) {
+            throw new StorageException("Failed to delete audio file, key: " + S3Key +
+                    ", bucket: " + minioConfig.getBuckets().getFirst(), e);
+        }
+    }
+
+
+    // DELETE TEMP FILES WITH LOGS
+    private void cleanupQuietly(Path... paths) {
+        for (Path path : paths) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (Exception e) {
+
+            }
+        }
     }
 }
