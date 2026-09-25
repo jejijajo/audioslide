@@ -6,6 +6,10 @@ import com.audioslide.youtube.config.YoutubeClientFactory;
 import com.audioslide.youtube.dto.YoutubeTokenResponseDto;
 import com.audioslide.youtube.event.VideoPublishedEvent;
 import com.audioslide.youtube.event.YoutubeDataCreatedEvent;
+import com.audioslide.youtube.exception.StorageException;
+import com.audioslide.youtube.exception.YoutubeAuthException;
+import com.audioslide.youtube.exception.YoutubeProcessingException;
+import com.audioslide.youtube.exception.YoutubeUploadException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
@@ -43,7 +47,7 @@ public class YoutubeService {
     private final YoutubeClientFactory youtubeClientFactory;
 
 
-    public void uploadVideo(YoutubeDataCreatedEvent youtubeDataCreatedEvent) throws Exception {
+    public void uploadVideo(YoutubeDataCreatedEvent youtubeDataCreatedEvent) {
         Video video = new Video();
 
         //metadata
@@ -71,11 +75,15 @@ public class YoutubeService {
         byte[] thumbnailBytes;
         try (GetObjectResponse thumbnailStream = minioClient.getObject(
                 GetObjectArgs.builder()
-                        .bucket(minioConfig.getBuckets().get(0))
+                        .bucket(minioConfig.getBuckets().getFirst())
                         .object(youtubeDataCreatedEvent.thumbnailS3Key())
                         .build())) {
 
             thumbnailBytes = thumbnailStream.readAllBytes();
+        } catch (Exception e) {
+            throw new StorageException("Failed to download file from S3, key: "
+                    + youtubeDataCreatedEvent.thumbnailS3Key()
+                    + ", bucket: " + minioConfig.getBuckets().getFirst(),e);
         }
 
         byte[] videoBytes;
@@ -86,24 +94,43 @@ public class YoutubeService {
                         .build())) {
 
             videoBytes = videoStream.readAllBytes();
+        } catch (Exception e) {
+            throw new StorageException("Failed to download file from S3, key: "
+                    + youtubeDataCreatedEvent.thumbnailS3Key()
+                    + ", bucket: " + minioConfig.getBuckets().getFirst(),e);
         }
 
         // upload to channel
 
         YoutubeTokenResponseDto response = authServiceClient.getYoutubeToken(youtubeDataCreatedEvent.userId());
 
-        YouTube youtube = youtubeClientFactory.build(response.accessToken());
+        YouTube youtube;
+        try {
+            youtube = youtubeClientFactory.build(response.accessToken());
+        } catch (Exception e) {
+            throw new YoutubeAuthException("Failed to create youtube client for user "
+                    + youtubeDataCreatedEvent.userId(), e);
+        }
 
         InputStreamContent mediaContent = new InputStreamContent(
                 "video/*", new ByteArrayInputStream(videoBytes));
         mediaContent.setLength(videoBytes.length);
 
-        YouTube.Videos.Insert videoInsert = youtube
-                .videos()
-                .insert(List.of("snippet", "status"), video, mediaContent);
-        videoInsert.setNotifySubscribers(false);
 
-        Video uploadedVideo = videoInsert.execute();
+        Video uploadedVideo;
+        try {
+            YouTube.Videos.Insert videoInsert = youtube
+                    .videos()
+                    .insert(List.of("snippet", "status"), video, mediaContent);
+            videoInsert.setNotifySubscribers(false);
+            uploadedVideo = videoInsert.execute();
+        } catch (GoogleJsonResponseException e) {
+            throw new YoutubeUploadException("YouTube API rejected upload: "
+                    + e.getDetails().getMessage(), e);
+        } catch (IOException e) {
+            throw new YoutubeUploadException("IO error during upload", e);
+        }
+
         String videoId = uploadedVideo.getId();
 
         // send success message to upload service

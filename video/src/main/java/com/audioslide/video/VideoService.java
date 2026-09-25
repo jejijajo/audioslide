@@ -54,7 +54,7 @@ public class VideoService {
             String videoObjectKey = sendToStorage(videoName, tempVideo, videoStream);
             rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey, fileLinksEvent.videoId()));
 
-            log.info("Message sended to queue, message");
+            log.info("Message sent to queue, message");
 
             deleteAudioFile(fileLinksEvent.audioObjectKey());
         } catch (IOException e) {
