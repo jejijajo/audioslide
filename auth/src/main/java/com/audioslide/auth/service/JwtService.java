@@ -3,6 +3,7 @@ package com.audioslide.auth.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class JwtService {
 
@@ -52,7 +54,7 @@ public class JwtService {
     public String createToken(Long userId, String email, Set<String> roles) {
         Date now = new Date();
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
                 .claim("roles", roles)
@@ -61,12 +63,16 @@ public class JwtService {
                 .expiration(new Date(now.getTime() + validityInMilliseconds))
                 .signWith(privateKey)
                 .compact();
+
+        log.info("Created jwt token");
+
+        return token;
     }
 
     public String createServiceToken(String serviceName, Set<String> scopes) {
         Date now = new Date();
 
-        return Jwts.builder()
+        String serviceToken = Jwts.builder()
                 .subject(serviceName)
                 .claim("type", "service")
                 .claim("scopes", scopes)
@@ -75,6 +81,10 @@ public class JwtService {
                 .expiration(new Date(now.getTime() + 5 * 60 * 1000))
                 .signWith(privateKey)
                 .compact();
+
+        log.info("Created internal jwt token");
+
+        return serviceToken;
     }
 
     public Claims validateAndParse(String token) {

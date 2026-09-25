@@ -2,8 +2,10 @@ package com.audioslide.auth.service;
 
 import com.audioslide.auth.entity.RefreshToken;
 import com.audioslide.auth.entity.User;
+import com.audioslide.auth.exception.RefreshTokenInvalidException;
 import com.audioslide.auth.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefreshTokenService {
@@ -31,6 +34,8 @@ public class RefreshTokenService {
         entity.setTokenHash(hash(rawToken));
         entity.setExpiresAt(Instant.now().plus(ttl, ChronoUnit.MILLIS));
         refreshTokenRepository.save(entity);
+
+        log.info("Saved refresh token entity");
 
         return rawToken;
     }
@@ -52,12 +57,15 @@ public class RefreshTokenService {
 
     public RefreshToken validate(String rawToken) {
         RefreshToken stored = refreshTokenRepository.findByTokenHash(hash(rawToken))
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+                .orElseThrow(() -> new RefreshTokenInvalidException("Invalid refresh token",null));
 
         if (stored.getExpiresAt().isBefore(Instant.now())) {
             refreshTokenRepository.delete(stored);
-            throw new IllegalArgumentException("Refresh token expired");
+            throw new RefreshTokenInvalidException("Refresh token expired",null);
         }
+
+        log.info("refresh token is validated");
+
         return stored;
     }
 

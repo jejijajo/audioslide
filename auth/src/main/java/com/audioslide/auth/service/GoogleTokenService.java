@@ -12,6 +12,7 @@ import com.audioslide.auth.exception.GoogleTokenNotFoundException;
 import com.audioslide.auth.exception.YoutubeScopeMissingException;
 import com.audioslide.auth.repository.GoogleTokenRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -26,6 +27,7 @@ import org.springframework.web.client.RestClientException;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GoogleTokenService {
@@ -64,6 +66,8 @@ public class GoogleTokenService {
             googleToken.setEncryptedRefreshToken(cryptoService.encrypt(refreshToken));
         }
 
+        log.info("Access and refresh token were created");
+
         return googleTokenRepository.save(googleToken);
     }
 
@@ -75,8 +79,11 @@ public class GoogleTokenService {
             throw new YoutubeScopeMissingException("User " + userId + " has not granted youtube.upload scope");
         }
 
+
+
         if (token.getExpiresAt().isAfter(Instant.now().plusSeconds(60))) {
-            return token; // if alive
+            log.info("Got valid access google token");
+            return token;
         }
 
         return refresh(token);
@@ -100,6 +107,9 @@ public class GoogleTokenService {
 
             token.setEncryptedAccessToken(cryptoService.encrypt(response.access_token()));
             token.setExpiresAt(Instant.now().plusSeconds(response.expires_in()));
+
+            log.info("Refreshed google token");
+
             return googleTokenRepository.save(token);
         } catch (HttpClientErrorException e) {
             if (isInvalidGrant(e)) {

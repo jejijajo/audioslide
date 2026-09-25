@@ -68,6 +68,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto("Internal error"));
     }
 
+    @ExceptionHandler(InternalTokenException.class)
+    public ResponseEntity<ErrorDto> handleInternalTokenException(InternalTokenException e) {
+        log.error("Unhandled exception", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto(e.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleUnexpected(Exception e) {
         log.error("Unhandled exception", e);
