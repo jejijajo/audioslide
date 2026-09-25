@@ -8,9 +8,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +17,7 @@ public class RabbitMQListener {
     private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = "${rabbit-listener.queue.name}", containerFactory = "rabbitListenerContainerFactory")
-    public void receiveMessage(Message message) throws Exception {
+    public void receiveMessage(Message message) {
         FileLinksEvent event = objectMapper.readValue(message.getBody(), FileLinksEvent.class);
 
         videoService.createVideo(event);

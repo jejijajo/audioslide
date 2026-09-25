@@ -9,6 +9,7 @@ import com.audioslide.video.render.VideoRender;
 import io.minio.*;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VideoService {
@@ -36,6 +38,7 @@ public class VideoService {
         Path tempVideo;
         try {
             tempVideo = Files.createTempFile("video-", ".mp4");
+            log.info("created temp video file");
         } catch (IOException e) {
             cleanupQuietly(tempPicture, tempAudio);
             throw new VideoProcessingException("Failed to create temp file for video", e);
@@ -44,14 +47,21 @@ public class VideoService {
         // MAKE VIDEO -> PUT IN S3 -> SEND MESSAGE IN RABBIT
 
         try (InputStream videoStream = videoRender.render(tempVideo, tempPicture, tempAudio)) {
+
+            log.info("Video rendered");
+
             String videoName = java.util.UUID.randomUUID() + ".mp4";
             String videoObjectKey = sendToStorage(videoName, tempVideo, videoStream);
             rabbitTemplate.convertAndSend(new VideoCreatedEvent(videoObjectKey, fileLinksEvent.videoId()));
+
+            log.info("Message sended to queue, message");
+
             deleteAudioFile(fileLinksEvent.audioObjectKey());
         } catch (IOException e) {
             throw new VideoProcessingException("Failed to close video stream", e);
         } finally {
             cleanupQuietly(tempPicture, tempAudio, tempVideo);
+            log.info("Temp files deleted");
         }
     }
 
@@ -78,6 +88,8 @@ public class VideoService {
                     "Failed to download/copy file, key: " + objectKey, e);
         }
 
+        log.info("created temp file, object key: " + objectKey + ", prefix: " + prefix + ", suffix: " + suffix);
+
         return tempFile;
     }
 
@@ -100,6 +112,8 @@ public class VideoService {
                             ", bucket: " + minioConfig.getBuckets().get(1) ,e);
         }
 
+        log.info("video sent to storage, key: " + objectKey);
+
         return objectKey;
     }
 
@@ -115,6 +129,8 @@ public class VideoService {
             throw new StorageException("Failed to delete audio file, key: " + S3Key +
                     ", bucket: " + minioConfig.getBuckets().getFirst(), e);
         }
+
+        log.info("Audio deleted from s3, key: " + S3Key);
     }
 
 
