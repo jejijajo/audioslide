@@ -86,6 +86,8 @@ public class YoutubeService {
                     + ", bucket: " + minioConfig.getBuckets().getFirst(),e);
         }
 
+        log.info("Thumbnail downloaded from s3, key: " + youtubeDataCreatedEvent.thumbnailS3Key() + ", bucket: " + minioConfig.getBuckets().getFirst());
+
         byte[] videoBytes;
         try (GetObjectResponse videoStream = minioClient.getObject(
                 GetObjectArgs.builder()
@@ -99,6 +101,8 @@ public class YoutubeService {
                     + youtubeDataCreatedEvent.thumbnailS3Key()
                     + ", bucket: " + minioConfig.getBuckets().getFirst(),e);
         }
+
+        log.info("Video downloaded from s3, key: " + youtubeDataCreatedEvent.thumbnailS3Key() + ", bucket: " + minioConfig.getBuckets().getFirst());
 
         // upload to channel
 
