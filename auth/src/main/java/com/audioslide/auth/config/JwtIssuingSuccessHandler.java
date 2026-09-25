@@ -2,6 +2,7 @@ package com.audioslide.auth.config;
 
 import com.audioslide.auth.entity.GoogleToken;
 import com.audioslide.auth.entity.User;
+import com.audioslide.auth.exception.GoogleTokenException;
 import com.audioslide.auth.service.GoogleTokenService;
 import com.audioslide.auth.service.JwtService;
 import com.audioslide.auth.service.RefreshTokenService;
@@ -10,6 +11,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.Instant;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
@@ -61,8 +64,8 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
         try {
             String channelId = googleTokenService.fetchChannelId(googleAccessToken.getTokenValue());
             googleTokenService.addToken(user, googleAccessToken, refreshTokenValue, googleAccessToken.getExpiresAt(), channelId);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (GoogleTokenException e) {
+            log.error("Failed to store Google token for user {}", email, e);
             res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to store Google token");
             return;
         }

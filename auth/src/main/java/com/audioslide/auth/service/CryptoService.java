@@ -1,5 +1,6 @@
 package com.audioslide.auth.service;
 
+import com.audioslide.auth.exception.CryptoOperationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -20,6 +21,10 @@ public class CryptoService {
     }
 
     public String decrypt(String encrypted) {
-        return encryptor.decrypt(encrypted);
+        try {
+            return encryptor.decrypt(encrypted);
+        } catch (Exception e) {
+            throw new CryptoOperationException("Failed to decrypt stored value", e);
+        }
     }
 }

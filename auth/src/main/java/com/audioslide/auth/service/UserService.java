@@ -2,6 +2,7 @@ package com.audioslide.auth.service;
 
 import com.audioslide.auth.dto.UserResponseDto;
 import com.audioslide.auth.entity.User;
+import com.audioslide.auth.exception.UserNotFoundException;
 import com.audioslide.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,5 @@ public class UserService {
                     newUser.setProviderId(googleId);
                     return userRepository.save(newUser);
                 });
-    }
-
-    public UserResponseDto findUserById(Long id) throws Exception {
-
-        User user = userRepository.findById(id).orElseThrow(() -> new Exception());
-        return new UserResponseDto();
     }
 }

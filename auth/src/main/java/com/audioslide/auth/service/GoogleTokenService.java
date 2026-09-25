@@ -6,6 +6,10 @@ import com.audioslide.auth.dto.YoutubeChannelListResponse;
 import com.audioslide.auth.dto.YoutubeTokenResponseDto;
 import com.audioslide.auth.entity.GoogleToken;
 import com.audioslide.auth.entity.User;
+import com.audioslide.auth.exception.GoogleReconsentRequiredException;
+import com.audioslide.auth.exception.GoogleTokenException;
+import com.audioslide.auth.exception.GoogleTokenNotFoundException;
+import com.audioslide.auth.exception.YoutubeScopeMissingException;
 import com.audioslide.auth.repository.GoogleTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.time.Instant;
 import java.util.List;
@@ -64,11 +69,10 @@ public class GoogleTokenService {
 
     public GoogleToken getValidAccessToken(Long userId) {
         GoogleToken token = googleTokenRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new IllegalStateException("No Google token for user " + userId));
+                .orElseThrow(() -> new GoogleTokenNotFoundException("No Google token for user " + userId));
 
         if (!hasUploadScope(token)) {
-            throw new RuntimeException(
-                    "User " + userId + " has not granted youtube.upload scope");
+            throw new YoutubeScopeMissingException("User " + userId + " has not granted youtube.upload scope");
         }
 
         if (token.getExpiresAt().isAfter(Instant.now().plusSeconds(60))) {
@@ -80,7 +84,7 @@ public class GoogleTokenService {
 
     private GoogleToken refresh(GoogleToken token) {
         if (token.getEncryptedRefreshToken() == null) {
-            throw new IllegalStateException("No refresh token available");
+            throw new GoogleReconsentRequiredException("No refresh token available", null);
         }
 
         String refreshToken = cryptoService.decrypt(token.getEncryptedRefreshToken());
@@ -101,9 +105,9 @@ public class GoogleTokenService {
             if (isInvalidGrant(e)) {
                 token.setEncryptedRefreshToken(null);
                 googleTokenRepository.save(token);
-                throw new IllegalStateException("Refresh token revoked, user must re-consent", e);
+                throw new GoogleReconsentRequiredException("Refresh token revoked, user must re-consent", e);
             }
-            throw e;
+            throw new GoogleTokenException("Google rejected refresh request", e);
         }
     }
 
@@ -135,11 +139,16 @@ public class GoogleTokenService {
     }
 
     public String fetchChannelId(String accessToken) {
-        var response = restClient.get()
-                .uri("https://www.googleapis.com/youtube/v3/channels?part=id&mine=true")
-                .header("Authorization", "Bearer " + accessToken)
-                .retrieve()
-                .body(YoutubeChannelListResponse.class);
+        YoutubeChannelListResponse response;
+        try {
+            response = restClient.get()
+                    .uri("https://www.googleapis.com/youtube/v3/channels?part=id&mine=true")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .retrieve()
+                    .body(YoutubeChannelListResponse.class);
+        } catch (RestClientException e) {
+            throw new GoogleTokenException("Failed to fetch YouTube channel id", e);
+        }
 
         if (response == null || response.items().isEmpty()) {
             throw new IllegalStateException("No YouTube channel found");
