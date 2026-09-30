@@ -1,5 +1,6 @@
 server:
-  port: 8088
+  forward-headers-strategy: framework
+  port: 8080
 
 spring:
   application:
@@ -10,6 +11,22 @@ spring:
         webflux:
           routes:
             - id: auth-login
-              uri: http://auth-service:8081
+              uri: http://auth:8080
               predicates:
                 - Path=/login, /oauth2/authorization/**, /login/oauth2/code/**
+
+            - id: upload-health
+              uri: http://upload:8080
+              predicates:
+                - Path=/upload/health
+              filters:
+                - SetPath=/health
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway
+
+
+

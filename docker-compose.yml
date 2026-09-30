@@ -1,4 +1,8 @@
 services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8085:8080"
   auth:
     build: ./auth
     ports:

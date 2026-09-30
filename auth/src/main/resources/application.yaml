@@ -15,6 +15,7 @@ spring:
               - https://www.googleapis.com/auth/youtube.upload
               - https://www.googleapis.com/auth/youtube.readonly
             authorization-grant-type: authorization_code
+            redirect-uri: "http://localhost:8085/login/oauth2/code/{registrationId}"
   datasource:
     url: jdbc:postgresql://localhost:5432/auth_db
     username: postgres
