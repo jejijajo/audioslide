@@ -22,6 +22,13 @@ spring:
               filters:
                 - SetPath=/health
 
+            - id: upload-upload
+              uri: http://upload:8080
+              predicates:
+                - Path=/upload
+              filters:
+                - SetPath=/api/upload
+
 management:
   endpoints:
     web:
