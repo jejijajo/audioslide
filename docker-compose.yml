@@ -5,8 +5,6 @@ services:
       - "8085:8080"
   auth:
     build: ./auth
-    ports:
-      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth
       SPRING_DATASOURCE_USERNAME: ${AUTHDBUSER}
@@ -26,8 +24,6 @@ services:
 
   upload:
     build: ./upload
-    ports:
-      - "8082:8080"
     environment:
       RABBIT_USERNAME: ${RABBITUSER}
       RABBIT_PASSWORD: ${RABBITPASSWORD}
@@ -47,8 +43,6 @@ services:
 
   video:
     build: ./video
-    ports:
-      - "8083:8080"
     environment:
       RABBIT_USERNAME: ${RABBITUSER}
       RABBIT_PASSWORD: ${RABBITPASSWORD}
@@ -63,8 +57,6 @@ services:
 
   youtube:
     build: ./youtube
-    ports:
-      - "8084:8080"
     environment:
       RABBIT_USERNAME: ${RABBITUSER}
       RABBIT_PASSWORD: ${RABBITPASSWORD}
@@ -82,8 +74,8 @@ services:
     image: minio/minio:latest
     container_name: minio_server
     ports:
-      - "9000:9000"     
-      - "9001:9001"       
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"    
     volumes:
       - minio_data:/data  
     environment:
@@ -96,8 +88,7 @@ services:
     image: rabbitmq:3.13-management
     container_name: rabbitmq_server
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "127.0.0.1:15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITUSER}
       RABBITMQ_DEFAULT_PASS: ${RABBITPASSWORD}
@@ -108,7 +99,7 @@ services:
     image: postgres:16
     container_name: upload_db
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     environment:
       POSTGRES_DB: upload
       POSTGRES_USER: ${UPLOADDBUSER}
@@ -121,7 +112,7 @@ services:
     image: postgres:16
     container_name: auth_db
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     environment:
       POSTGRES_DB: auth
       POSTGRES_USER: ${AUTHDBUSER}
@@ -133,7 +124,6 @@ services:
   loki:
     image: grafana/loki:3.2.0
     command: -config.file=/etc/loki/local-config.yaml
-    ports: ["3100:3100"]
     volumes: [loki-data:/loki]
 
   alloy:
@@ -142,8 +132,7 @@ services:
       - run
       - --server.http.listen-addr=0.0.0.0:12345
       - --storage.path=/var/lib/alloy/data
-      - /etc/alloy/config.alloy
-    ports: ["12345:12345"]      
+      - /etc/alloy/config.alloy   
     volumes:
       - ./logs-and-metrics/config.alloy:/etc/alloy/config.alloy
       - alloy-data:/var/lib/alloy/data
@@ -152,7 +141,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.2.0
-    ports: ["3000:3000"]
+    ports: ["127.0.0.1:3000:3000"]
     volumes:
       - grafana-data:/var/lib/grafana
       - ./logs-and-metrics/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
