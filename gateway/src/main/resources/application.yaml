@@ -15,13 +15,6 @@ spring:
               predicates:
                 - Path=/login, /oauth2/authorization/**, /login/oauth2/code/**
 
-            - id: upload-health
-              uri: http://upload:8080
-              predicates:
-                - Path=/upload/health
-              filters:
-                - SetPath=/health
-
             - id: upload-upload
               uri: http://upload:8080
               predicates:

@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Build all services
+        run: |
+          for s in auth upload video youtube gateway; do
+            (cd $s && mvn -B clean package -DskipTests)
+          done
+      - name: Dummy .env
+        run: |
+          for v in AUTHDBUSER AUTHDBPASSWORD UPLOADDBUSER UPLOADDBPASSWORD RABBITUSER RABBITPASSWORD \
+                   MINIOROOTUSER MINIOROOTPASSWORD GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_PRIVATE_KEY \
+                   JWT_PUBLIC_KEY SERVICE_YOUTUBE_SECRET GOOGLE_TOKEN_ENC_KEY GOOGLE_TOKEN_ENC_SALT; do
+            echo "$v=dummy" >> .env
+          done
+      - run: docker compose build
