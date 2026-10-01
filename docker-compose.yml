@@ -18,9 +18,11 @@ services:
       GOOGLE_TOKEN_ENC_SALT: ${GOOGLE_TOKEN_ENC_SALT}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
-      - auth-db
+      auth-db:
+        condition: service_healthy
     labels:
       logging: "alloy"
+    restart: unless-stopped
 
   upload:
     build: ./upload
@@ -35,11 +37,15 @@ services:
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
-      - rabbitmq
-      - minio
-      - upload-db
+      upload-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     labels:
       logging: "alloy"
+    restart: unless-stopped
 
   video:
     build: ./video
@@ -50,10 +56,13 @@ services:
       MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
-      - rabbitmq
-      - minio
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     labels:
       logging: "alloy"
+    restart: unless-stopped
 
   youtube:
     build: ./youtube
@@ -65,10 +74,13 @@ services:
       SERVICE_YOUTUBE_SECRET: ${SERVICE_YOUTUBE_SECRET}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
     depends_on:
-      - rabbitmq
-      - minio
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     labels:
       logging: "alloy"
+    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
@@ -83,6 +95,12 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIOROOTPASSWORD}
     command: server /data --console-address ":9001"
     restart: always
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   rabbitmq:
     image: rabbitmq:3.13-management
@@ -94,6 +112,12 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITPASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   upload-db:
     image: postgres:16
@@ -107,6 +131,12 @@ services:
     volumes:
       - upload_db_data:/var/lib/postgresql/data
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   auth-db:
     image: postgres:16
@@ -120,6 +150,12 @@ services:
     volumes:
       - auth_db_data:/var/lib/postgresql/data
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   loki:
     image: grafana/loki:3.2.0
