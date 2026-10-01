@@ -1,0 +1,32 @@
+server:
+  forward-headers-strategy: framework
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: auth-login
+              uri: http://auth:8080
+              predicates:
+                - Path=/login, /oauth2/authorization/**, /login/oauth2/code/**
+
+            - id: upload-upload
+              uri: http://upload:8080
+              predicates:
+                - Path=/upload
+              filters:
+                - SetPath=/api/upload
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway
+
+
+

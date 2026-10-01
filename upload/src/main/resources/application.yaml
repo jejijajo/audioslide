@@ -1,3 +1,50 @@
 spring:
   application:
     name: upload
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  rabbitmq:
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    host: ${RABBIT_HOST:rabbitmq}
+    port: ${RABBIT_PORT:5672}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+  access-key: ${MINIO_ACCESS_KEY}
+  secret-key: ${MINIO_SECRET_KEY}
+  buckets:
+    - raw-uploads
+    - media-output
+
+rabbit:
+  exchange:
+    name: upload_exchange
+  queues:
+    upload:
+      name: upload_queue
+      routing-key: "upload-completed"
+    youtube:
+      name: youtube_upload_queue
+      routing-key: "youtube-upload-requested"
+
+rabbit-listener:
+  video-queue:
+    name: video_queue
+  youtube-published-queue:
+    name: youtube_published_queue
+
+jwt:
+  public-key: ${JWT_PUBLIC_KEY}

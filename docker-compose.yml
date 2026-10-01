@@ -1,0 +1,193 @@
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8085:8080"
+  auth:
+    build: ./auth
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth
+      SPRING_DATASOURCE_USERNAME: ${AUTHDBUSER}
+      SPRING_DATASOURCE_PASSWORD: ${AUTHDBPASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      SERVICE_YOUTUBE_SECRET: ${SERVICE_YOUTUBE_SECRET}
+      GOOGLE_TOKEN_ENC_KEY: ${GOOGLE_TOKEN_ENC_KEY}
+      GOOGLE_TOKEN_ENC_SALT: ${GOOGLE_TOKEN_ENC_SALT}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    labels:
+      logging: "alloy"
+    restart: unless-stopped
+
+  upload:
+    build: ./upload
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://upload-db:5432/upload
+      SPRING_DATASOURCE_USERNAME: ${UPLOADDBUSER}
+      SPRING_DATASOURCE_PASSWORD: ${UPLOADDBPASSWORD}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+    depends_on:
+      upload-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    labels:
+      logging: "alloy"
+    restart: unless-stopped
+
+  video:
+    build: ./video
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    labels:
+      logging: "alloy"
+    restart: unless-stopped
+
+  youtube:
+    build: ./youtube
+    environment:
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
+      MINIO_ACCESS_KEY: ${MINIOROOTUSER}
+      MINIO_SECRET_KEY: ${MINIOROOTPASSWORD}
+      SERVICE_YOUTUBE_SECRET: ${SERVICE_YOUTUBE_SECRET}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    labels:
+      logging: "alloy"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio_server
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"    
+    volumes:
+      - minio_data:/data  
+    environment:
+      MINIO_ROOT_USER: ${MINIOROOTUSER}
+      MINIO_ROOT_PASSWORD: ${MINIOROOTPASSWORD}
+    command: server /data --console-address ":9001"
+    restart: always
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq_server
+    ports:
+      - "127.0.0.1:15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITUSER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITPASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  upload-db:
+    image: postgres:16
+    container_name: upload_db
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: upload
+      POSTGRES_USER: ${UPLOADDBUSER}
+      POSTGRES_PASSWORD: ${UPLOADDBPASSWORD}
+    volumes:
+      - upload_db_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  auth-db:
+    image: postgres:16
+    container_name: auth_db
+    ports:
+      - "127.0.0.1:5434:5432"
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: ${AUTHDBUSER}
+      POSTGRES_PASSWORD: ${AUTHDBPASSWORD}
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  loki:
+    image: grafana/loki:3.2.0
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes: [loki-data:/loki]
+
+  alloy:
+    image: grafana/alloy:latest  
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy   
+    volumes:
+      - ./logs-and-metrics/config.alloy:/etc/alloy/config.alloy
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on: [loki]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./logs-and-metrics/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on: [loki]
+
+volumes:
+  minio_data:
+  rabbitmq_data:
+  upload_db_data:
+  auth_db_data:
+  loki-data:
+  grafana-data:
+  alloy-data:
