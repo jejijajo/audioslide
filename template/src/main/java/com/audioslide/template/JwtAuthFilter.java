@@ -1,6 +1,5 @@
-package com.audioslide.upload.config;
+package com.audioslide.template;
 
-import com.audioslide.upload.service.JwtValidator;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.FilterChain;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.util.List;
-import java.util.Set;
 
 @Component
 @RequiredArgsConstructor

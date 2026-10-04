@@ -1,4 +1,4 @@
-package com.audioslide.upload.service;
+package com.audioslide.template;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
