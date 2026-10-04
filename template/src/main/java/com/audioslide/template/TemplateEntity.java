@@ -19,22 +19,23 @@ public class TemplateEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String templateName;
 
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
 
+    @Column(length = 4500)
     private String description;
 
     private Integer categoryId;
 
     @ElementCollection
     @CollectionTable(name = "video_tags", joinColumns = @JoinColumn(name = "video_id"))
-    @Column(name = "tag")
+    @Column(name = "tag", length = 500)
     private List<String> tags;
 
     @Column(nullable = false)
