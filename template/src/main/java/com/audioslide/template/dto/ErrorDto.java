@@ -1,4 +1,4 @@
 package com.audioslide.template.dto;
 
-public class ErrorDto {
+public record ErrorDto(String message) {
 }
