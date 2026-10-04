@@ -28,19 +28,19 @@ public class TemplateController {
     @DeleteMapping("/{id}/delete")
     public void deleteTemplate(
             @PathVariable Long id,
-            @AuthenticationPrincipal String userId) throws Exception {
+            @AuthenticationPrincipal String userId) {
         templateService.deleteTemplate(id, Long.parseLong(userId));
     }
 
     @GetMapping
-    public ReadAllTemplatesResponseDto allTemplates(@AuthenticationPrincipal String userId) throws Exception {
+    public ReadAllTemplatesResponseDto allTemplates(@AuthenticationPrincipal String userId) {
         return templateService.readAllTemplates(Long.parseLong(userId));
     }
 
     @GetMapping("/{id}")
     public ReadTemplateResponseDto allTemplates(
             @PathVariable Long id,
-            @AuthenticationPrincipal String userId) throws Exception {
+            @AuthenticationPrincipal String userId) {
         return templateService.readTemplate(id, Long.parseLong(userId));
     }
 
