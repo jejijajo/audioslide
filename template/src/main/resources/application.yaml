@@ -14,3 +14,6 @@ spring:
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}
+
+template:
+  max-per-user: 10
