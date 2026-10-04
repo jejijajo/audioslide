@@ -1,4 +1,6 @@
 package com.audioslide.template.dto;
 
-public record ReadAllTemplatesResponseDto() {
+import java.util.List;
+
+public record ReadAllTemplatesResponseDto(List<ReadTemplateResponseDto> templates) {
 }
