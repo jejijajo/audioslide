@@ -1,4 +1,21 @@
 services:
+  template:
+    build: ./template
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://template-db:5432/template
+      SPRING_DATASOURCE_USERNAME: ${TEMPLATEDBUSER}
+      SPRING_DATASOURCE_PASSWORD: ${TEMPLATEDBPASSWORD}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+    ports:
+      - "8086:8080"
+    depends_on:
+      template-db:
+        condition: service_healthy
+    labels:
+      logging: "alloy"
+    restart: unless-stopped
+
   gateway:
     build: ./gateway
     ports:
@@ -157,6 +174,25 @@ services:
       retries: 10
       start_period: 5s
 
+  template-db:
+    image: postgres:16
+    container_name: template_db
+    ports:
+      - "127.0.0.1:5435:5432"
+    environment:
+      POSTGRES_DB: template
+      POSTGRES_USER: ${TEMPLATEDBUSER}
+      POSTGRES_PASSWORD: ${TEMPLATEDBPASSWORD}
+    volumes:
+      - template_db_data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
   loki:
     image: grafana/loki:3.2.0
     command: -config.file=/etc/loki/local-config.yaml
@@ -187,6 +223,7 @@ volumes:
   minio_data:
   rabbitmq_data:
   upload_db_data:
+  template_db_data:
   auth_db_data:
   loki-data:
   grafana-data:
