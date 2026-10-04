@@ -19,6 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TemplateNotFoundException.class)
     public ResponseEntity<ErrorDto> templateNotFoundHandler(TemplateNotFoundException e) {
+        log.warn("Template not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto(e.getMessage()));
     }
 
@@ -27,16 +28,19 @@ public class GlobalExceptionHandler {
         String msg = e.getBindingResult().getFieldErrors().stream()
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
                 .collect(Collectors.joining("; "));
+        log.warn("Validation failed: {}", msg);
         return ResponseEntity.badRequest().body(new ErrorDto(msg));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorDto> badJsonHandler(HttpMessageNotReadableException e) {
+        log.warn("Malformed JSON request: {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorDto("Malformed JSON request"));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorDto> typeMismatchHandler(MethodArgumentTypeMismatchException e) {
+        log.warn("Type mismatch for parameter '{}': {}", e.getName(), e.getValue());
         return ResponseEntity.badRequest()
                 .body(new ErrorDto("Invalid value for parameter '" + e.getName() + "'"));
     }
@@ -48,25 +52,28 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto("Data conflict: value already exists or violates constraints"));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> generalHandler(Exception e) {
-        log.error("Unhandled exception", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorDto("Internal server error"));
-    }
-
     @ExceptionHandler(TemplateAlreadyExistsException.class)
     public ResponseEntity<ErrorDto> templateAlreadyExistsHandler(TemplateAlreadyExistsException e) {
+        log.warn("Template already exists: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorDto(e.getMessage()));
     }
 
     @ExceptionHandler(TemplateLimitExceededException.class)
     public ResponseEntity<ErrorDto> templateLimitExceededHandler(TemplateLimitExceededException e) {
+        log.warn("Template limit exceeded: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorDto(e.getMessage()));
     }
 
     @ExceptionHandler(InvalidCategoryException.class)
     public ResponseEntity<ErrorDto> invalidCategoryHandler(InvalidCategoryException e) {
+        log.warn("Invalid category: {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorDto(e.getMessage()));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDto> generalHandler(Exception e) {
+        log.error("Unhandled exception", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto("Internal server error"));
     }
 }

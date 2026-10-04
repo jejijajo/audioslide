@@ -9,6 +9,7 @@ import com.audioslide.template.exception.TemplateAlreadyExistsException;
 import com.audioslide.template.exception.TemplateLimitExceededException;
 import com.audioslide.template.exception.TemplateNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TemplateService {
 
@@ -37,6 +39,9 @@ public class TemplateService {
 
         TemplateEntity templateEntity = TemplateMapper.fromCreateTemplateRequestDtoToTemplateEntity(dto, userId);
         TemplateEntity savedTemplateEntity = templateRepository.save(templateEntity);
+
+        log.info("templated is created, id: {}", templateEntity.getId());
+
         return TemplateMapper.fromTemplateEntityToCreateTemplateResponseDto(savedTemplateEntity);
     }
 
@@ -44,6 +49,9 @@ public class TemplateService {
     public ReadTemplateResponseDto readTemplate(Long templateId, Long userId) {
         TemplateEntity templateEntity = templateRepository.findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new TemplateNotFoundException("Failed to find template"));
+
+        log.info("successful get template, id: {}", templateEntity.getId());
+
         return TemplateMapper.fromTemplateEntityToReadTemplateResponseDto(templateEntity);
     }
 
@@ -51,6 +59,9 @@ public class TemplateService {
     public ReadAllTemplatesResponseDto readAllTemplates(Long userId)  {
         List<TemplateEntity> templates = templateRepository.findAllByUserId(userId)
                 .orElseThrow(() -> new TemplateNotFoundException("Failed to find templates"));
+
+        log.info("successful get all templates, userId: {}", userId);
+
         return TemplateMapper.fromTemplateEntityListToReadAllTemplatesResponseDto(templates);
     }
 
@@ -58,6 +69,8 @@ public class TemplateService {
     public void deleteTemplate(Long templateId, Long userId)  {
         TemplateEntity templateEntity = templateRepository.findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new TemplateNotFoundException("Failed to find template"));
+
+        log.info("successful delete template, id: {}", userId);
 
         templateRepository.delete(templateEntity);
     }
