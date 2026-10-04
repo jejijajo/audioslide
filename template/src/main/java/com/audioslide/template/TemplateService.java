@@ -4,9 +4,9 @@ import com.audioslide.template.dto.CreateTemplateRequestDto;
 import com.audioslide.template.dto.CreateTemplateResponseDto;
 import com.audioslide.template.dto.ReadAllTemplatesResponseDto;
 import com.audioslide.template.dto.ReadTemplateResponseDto;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,13 +23,14 @@ public class TemplateService {
         return TemplateMapper.fromTemplateEntityToCreateTemplateResponseDto(savedTemplateEntity);
     }
 
+    @Transactional(readOnly = true)
     public ReadTemplateResponseDto readTemplate(Long templateId, Long userId) throws Exception {
-        TemplateEntity templateEntity = templateRepository.findById(templateId)
+        TemplateEntity templateEntity = templateRepository.findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new Exception("Failed to find template"));
-        if(!userId.equals(templateEntity.getUserId())) { throw new Exception("Failed to read template"); }
         return TemplateMapper.fromTemplateEntityToReadTemplateResponseDto(templateEntity);
     }
 
+    @Transactional(readOnly = true)
     public ReadAllTemplatesResponseDto readAllTemplates(Long userId) throws Exception {
         List<TemplateEntity> templates = templateRepository.findAllByUserId(userId)
                 .orElseThrow(() -> new Exception("Failed to find templates"));
@@ -38,8 +39,9 @@ public class TemplateService {
 
     @Transactional
     public void deleteTemplate(Long templateId, Long userId) throws Exception {
-        TemplateEntity templateEntity = templateRepository.findById(templateId)
+        TemplateEntity templateEntity = templateRepository.findByIdAndUserId(templateId, userId)
                 .orElseThrow(() -> new Exception("Failed to find template"));
+
         templateRepository.delete(templateEntity);
     }
 }

@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface TemplateRepository extends JpaRepository<TemplateEntity ,Long> {
 
     Optional<List<TemplateEntity>> findAllByUserId(Long userId);
+    Optional<TemplateEntity> findByIdAndUserId(Long id, Long userId);
 }
