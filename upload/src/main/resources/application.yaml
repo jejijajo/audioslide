@@ -4,6 +4,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 20MB
+      max-request-size: 40MB
   rabbitmq:
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
@@ -47,3 +48,6 @@ rabbit-listener:
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}
+
+audio:
+  max-length: 600

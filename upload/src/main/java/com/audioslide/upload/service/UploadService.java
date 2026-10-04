@@ -9,6 +9,7 @@ import com.audioslide.upload.event.FileLinksEvent;
 import com.audioslide.upload.event.VideoCreatedEvent;
 import com.audioslide.upload.event.VideoPublishedEvent;
 import com.audioslide.upload.event.YoutubeDataCreatedEvent;
+import com.audioslide.upload.exception.InvalidFileException;
 import com.audioslide.upload.exception.StorageException;
 import com.audioslide.upload.exception.VideoNotFoundException;
 import com.audioslide.upload.mapper.VideoMapper;
@@ -18,12 +19,18 @@ import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jaudiotagger.audio.AudioFile;
+import org.jaudiotagger.audio.AudioFileIO;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 @Slf4j
@@ -44,6 +51,9 @@ public class UploadService {
     @Value("${rabbit.queues.youtube.routing-key}")
     private String YOUTUBE_ROUTING_KEY;
 
+    @Value("${audio.max-length}")
+    private Long AUDIO_MAX_LENGTH;
+
     @Transactional
     public UploadResponseDto upload(
             MultipartFile picture,
@@ -51,6 +61,9 @@ public class UploadService {
             UploadRequestDto metadata,
             Long userId
     ) {
+        validateMp3(audio);
+        if(getAudioDurationSeconds(audio) > AUDIO_MAX_LENGTH) { throw new InvalidFileException("Audio is too long", null);}
+
         String pictureObjectKey = putToMinio("pictures/", picture);
         String audioObjectKey = putToMinio("audio/", audio);
 
@@ -133,6 +146,46 @@ public class UploadService {
         }
 
 
+    }
+
+    private int getAudioDurationSeconds(MultipartFile audio) {
+        Path tmp;
+        try {
+            tmp = Files.createTempFile("audio-", ".mp3");
+        } catch (IOException e) {
+            throw new InvalidFileException("Cannot create temp audio file", e);
+        }
+
+        try {
+            audio.transferTo(tmp);
+            AudioFile file = AudioFileIO.read(tmp.toFile());
+            return file.getAudioHeader().getTrackLength();
+        } catch (Exception e) {
+            throw new InvalidFileException("Cannot read audio file", e);
+        } finally {
+            try {
+                Files.deleteIfExists(tmp);
+            } catch (IOException e) {
+                log.warn("Failed to delete temp file {}", tmp, e);
+            }
+        }
+    }
+
+    private void validateMp3(MultipartFile audio) {
+        byte[] h = new byte[3];
+        try (InputStream in = audio.getInputStream()) {
+            if (in.readNBytes(h, 0, 3) < 3) {
+                throw new InvalidFileException("Invalid mp3 file", null);
+            }
+        } catch (IOException e) {
+            throw new InvalidFileException("Cannot read audio file", e);
+        }
+
+        boolean id3 = h[0] == 'I' && h[1] == 'D' && h[2] == '3';
+        boolean frame = (h[0] & 0xFF) == 0xFF && (h[1] & 0xE0) == 0xE0;
+        if (!id3 && !frame) {
+            throw new InvalidFileException("File is not a valid mp3", null);
+        }
     }
 
 }
