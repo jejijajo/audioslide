@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.util.List;
 
 @Entity
-@Table(name = "templates")
+@Table(name = "templates", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "template_name"}))
 @NoArgsConstructor
 @Getter
 @Setter
