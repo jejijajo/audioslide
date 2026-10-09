@@ -1,7 +1,7 @@
 package com.audioslide.schedule.exception;
 
 public class InvalidRequestException extends RuntimeException {
-  public InvalidRequestException(String message) {
-    super(message);
-  }
+    public InvalidRequestException(String message) {
+        super(message);
+    }
 }
