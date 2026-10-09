@@ -1,4 +1,4 @@
-package com.audioslide.template;
+package com.audioslide.schedule;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.io.IOException;
