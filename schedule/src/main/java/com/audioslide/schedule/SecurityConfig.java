@@ -1,4 +1,4 @@
-package com.audioslide.upload.config;
+package com.audioslide.schedule;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
