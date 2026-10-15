@@ -4,6 +4,7 @@ import com.audioslide.auth.config.InternalClientProperties;
 import com.audioslide.auth.dto.InternalTokenRequestDto;
 import com.audioslide.auth.dto.InternalTokenResponseDto;
 import com.audioslide.auth.exception.InternalTokenException;
+import com.audioslide.auth.service.InternalTokenService;
 import com.audioslide.auth.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +21,10 @@ import java.util.Set;
 public class InternalTokenController {
 
 
-    private final JwtService jwtService;
-    private final InternalClientProperties clients;
+    private final InternalTokenService internalTokenService;
 
     @PostMapping("/internal/token")
     public InternalTokenResponseDto issueServiceToken(@RequestBody InternalTokenRequestDto internalTokenRequestDto) throws Exception {
-        var config = clients.getClients().get(internalTokenRequestDto.clientId());
-        if (config == null || !config.getSecret().equals(internalTokenRequestDto.secret())) {
-            throw new InternalTokenException("internal secret invalid");
-        }
-
-        Set<String> scopes = Set.of(config.getScopes().split(","));
-        String token = jwtService.createServiceToken(internalTokenRequestDto.clientId(), scopes);
-
-        return new InternalTokenResponseDto(token, 300);
+        return internalTokenService.issueServiceToken(internalTokenRequestDto);
     }
 }
