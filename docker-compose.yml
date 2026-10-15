@@ -9,8 +9,6 @@ services:
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
       RABBIT_USERNAME: ${RABBITUSER}
       RABBIT_PASSWORD: ${RABBITPASSWORD}
-    ports:
-      - "8087:8080"
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -28,8 +26,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${TEMPLATEDBPASSWORD}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
-    ports:
-      - "8086:8080"
     depends_on:
       template-db:
         condition: service_healthy
