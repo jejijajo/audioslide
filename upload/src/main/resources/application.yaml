@@ -39,6 +39,9 @@ rabbit:
     youtube:
       name: youtube_upload_queue
       routing-key: "youtube-upload-requested"
+    schedule:
+      name: schedule_video_scheduled_queue
+      routing-key: "video-scheduled"
 
 rabbit-listener:
   video-queue:

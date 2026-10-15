@@ -5,10 +5,7 @@ import com.audioslide.upload.dto.UploadRequestDto;
 import com.audioslide.upload.dto.UploadResponseDto;
 import com.audioslide.upload.entity.VideoEntity;
 import com.audioslide.upload.entity.VideoStatus;
-import com.audioslide.upload.event.FileLinksEvent;
-import com.audioslide.upload.event.VideoCreatedEvent;
-import com.audioslide.upload.event.VideoPublishedEvent;
-import com.audioslide.upload.event.YoutubeDataCreatedEvent;
+import com.audioslide.upload.event.*;
 import com.audioslide.upload.exception.InvalidFileException;
 import com.audioslide.upload.exception.StorageException;
 import com.audioslide.upload.exception.VideoNotFoundException;
@@ -31,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -50,6 +48,9 @@ public class UploadService {
 
     @Value("${rabbit.queues.youtube.routing-key}")
     private String YOUTUBE_ROUTING_KEY;
+
+    @Value("${rabbit.queues.schedule.routing-key}")
+    private String SCHEDULE_ROUTING_KEY;
 
     @Value("${audio.max-length}")
     private Long AUDIO_MAX_LENGTH;
@@ -130,6 +131,21 @@ public class UploadService {
         videoRepository.save(videoEntity);
 
         log.info("Video published: videoId={}", videoEntity.getId());
+
+        VideoPublishScheduledEvent videoPublishScheduledEvent;
+        if(videoEntity.getPublishAt() != null) {
+            videoPublishScheduledEvent = new VideoPublishScheduledEvent(
+                    videoEntity.getUserId(),
+                    videoEntity.getPublishAt()
+            );
+        } else {
+            videoPublishScheduledEvent = new VideoPublishScheduledEvent(
+                    videoEntity.getUserId(),
+                    Instant.now()
+            );
+        }
+
+        rabbitTemplate.convertAndSend(EXCHANGE_NAME, SCHEDULE_ROUTING_KEY, videoPublishScheduledEvent);
     }
 
     private void deleteVideoFromS3(String videoS3Key) {
