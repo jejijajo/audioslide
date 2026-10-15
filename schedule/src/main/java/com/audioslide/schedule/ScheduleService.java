@@ -3,7 +3,7 @@ package com.audioslide.schedule;
 import com.audioslide.schedule.dto.CalculateDatesResponseDto;
 import com.audioslide.schedule.dto.SetScheduleRequestDto;
 import com.audioslide.schedule.dto.SetScheduleResponseDto;
-import com.audioslide.schedule.exception.InvalidRequestException;
+import com.audioslide.schedule.event.VideoPublishScheduledEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -81,5 +81,18 @@ public class ScheduleService {
         }
         log.info("dates calculated");
         return new CalculateDatesResponseDto(result);
+    }
+
+    public void setLastUploadDateTime(VideoPublishScheduledEvent event) {
+        ScheduleEntity entity = scheduleRepository.findByUserId(event.userId())
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
+
+        Instant last = entity.getLastUploadDateTime();
+        if (last == null || event.date().isAfter(last)) {
+            entity.setLastUploadDateTime(event.date());
+            scheduleRepository.save(entity);
+            log.info("set new last upload date");
+        }
+
     }
 }
