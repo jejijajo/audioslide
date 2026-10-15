@@ -22,6 +22,69 @@ spring:
               filters:
                 - SetPath=/api/upload
 
+            - id: template-create
+              uri: http://template:8080
+              predicates:
+                - Path=/create
+              filters:
+                - SetPath=/api/template/create
+
+            - id: template-delete
+              uri: http://template:8080
+              predicates:
+                - Path=/{id}/delete
+                - Method=DELETE
+              filters:
+                - SetPath=/api/template/{id}/delete
+
+            - id: template-all
+              uri: http://template:8080
+              predicates:
+                - Path=/templates
+                - Method=GET
+              filters:
+                - SetPath=/api/template
+
+            - id: template-read
+              uri: http://template:8080
+              predicates:
+                - Path=/templates/{id}
+                - Method=GET
+              filters:
+                - SetPath=/api/template/{id}
+
+            - id: schedule-health
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/health
+                - Method=GET
+              filters:
+                - SetPath=/api/schedule/health
+
+            - id: schedule-set
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/set
+                - Method=POST
+              filters:
+                - SetPath=/api/schedule/set
+
+            - id: schedule-calculate
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/calculate/{count}
+                - Method=GET
+              filters:
+                - SetPath=/api/schedule/calculate/{count}
+
+            - id: auth-refresh
+              uri: http://auth:8080
+              predicates:
+                - Path=/auth/refresh
+                - Method=POST
+              filters:
+                - SetPath=/api/auth/refresh
+
 management:
   endpoints:
     web:
