@@ -7,9 +7,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SCHEDULEDBPASSWORD}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
       LOGGING_STRUCTURED_FORMAT_CONSOLE: logstash
+      RABBIT_USERNAME: ${RABBITUSER}
+      RABBIT_PASSWORD: ${RABBITPASSWORD}
     ports:
       - "8087:8080"
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       schedule-db:
         condition: service_healthy
     labels:
