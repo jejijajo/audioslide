@@ -11,6 +11,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    host: ${RABBIT_HOST:rabbitmq}
+    port: ${RABBIT_PORT:5672}
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}
+
+rabbit-listener:
+  queue:
+    name: schedule_video_scheduled_queue
