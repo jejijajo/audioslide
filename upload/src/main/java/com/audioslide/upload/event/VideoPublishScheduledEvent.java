@@ -1,4 +1,4 @@
-package com.audioslide.schedule.event;
+package com.audioslide.upload.event;
 
 import java.time.Instant;
 
