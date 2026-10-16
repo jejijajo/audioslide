@@ -16,12 +16,12 @@ jobs:
           cache: maven
       - name: Build all services
         run: |
-          for s in auth upload video youtube gateway template; do
+          for s in auth upload video youtube gateway template schedule; do
             (cd $s && mvn -B clean package -DskipTests)
           done
       - name: Dummy .env
         run: |
-          for v in AUTHDBUSER AUTHDBPASSWORD UPLOADDBUSER UPLOADDBPASSWORD TEMPLATEDBUSER TEMPLATEDBPASSWORD RABBITUSER RABBITPASSWORD \
+          for v in AUTHDBUSER AUTHDBPASSWORD UPLOADDBUSER UPLOADDBPASSWORD TEMPLATEDBUSER TEMPLATEDBPASSWORD SCHEDULEDBUSER SCHEDULEDBPASSWORD RABBITUSER RABBITPASSWORD \
                    MINIOROOTUSER MINIOROOTPASSWORD GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_PRIVATE_KEY \
                    JWT_PUBLIC_KEY SERVICE_YOUTUBE_SECRET GOOGLE_TOKEN_ENC_KEY GOOGLE_TOKEN_ENC_SALT; do
             echo "$v=dummy" >> .env
