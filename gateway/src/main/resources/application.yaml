@@ -45,7 +45,7 @@ spring:
             - id: template-delete
               uri: http://template:8080
               predicates:
-                - Path=template/{id}/delete
+                - Path=/template/{id}/delete
                 - Method=DELETE
               filters:
                 - SetPath=/api/template/{id}/delete
