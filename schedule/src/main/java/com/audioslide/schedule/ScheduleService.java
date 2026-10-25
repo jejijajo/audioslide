@@ -61,9 +61,13 @@ public class ScheduleService {
         Set<DayOfWeek> days = entity.getScheduledDays();
 
         Instant now = Instant.now();
-        Instant base = entity.getLastUploadDateTime() != null
-                ? entity.getLastUploadDateTime()
-                : now;
+        Instant base;
+
+        if(entity.getLastUploadDateTime() != null && entity.getLastUploadDateTime().isBefore(now)) {
+            base = now;
+        } else {
+            base = entity.getLastUploadDateTime();
+        }
 
         ZonedDateTime from = base.atZone(zone);
         LocalDate date = from.toLocalDate();
@@ -94,5 +98,15 @@ public class ScheduleService {
             log.info("set new last upload date");
         }
 
+    }
+
+    public SetScheduleResponseDto getSchedule(Long userId) {
+        ScheduleEntity entity = scheduleRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("Schedule not found"));
+        return new SetScheduleResponseDto(
+                entity.getScheduledDays(),
+                entity.getScheduledTime(),
+                entity.getZoneId().toString()
+        );
     }
 }

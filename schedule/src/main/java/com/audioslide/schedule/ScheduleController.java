@@ -31,4 +31,9 @@ public class ScheduleController {
         return scheduleService.calculateDateTime(Long.parseLong(userId), count);
     }
 
+    @GetMapping
+    public SetScheduleResponseDto getSchedule(@AuthenticationPrincipal String userId) {
+        return scheduleService.getSchedule(Long.parseLong(userId));
+    }
+
 }
