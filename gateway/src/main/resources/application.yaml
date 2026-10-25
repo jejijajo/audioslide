@@ -37,14 +37,15 @@ spring:
             - id: template-create
               uri: http://template:8080
               predicates:
-                - Path=/create
+                - Path=/template/create
+                - Method=POST
               filters:
                 - SetPath=/api/template/create
 
             - id: template-delete
               uri: http://template:8080
               predicates:
-                - Path=/{id}/delete
+                - Path=template/{id}/delete
                 - Method=DELETE
               filters:
                 - SetPath=/api/template/{id}/delete
@@ -52,7 +53,7 @@ spring:
             - id: template-all
               uri: http://template:8080
               predicates:
-                - Path=/templates
+                - Path=/template
                 - Method=GET
               filters:
                 - SetPath=/api/template
@@ -60,7 +61,7 @@ spring:
             - id: template-read
               uri: http://template:8080
               predicates:
-                - Path=/templates/{id}
+                - Path=/template/{id}
                 - Method=GET
               filters:
                 - SetPath=/api/template/{id}
