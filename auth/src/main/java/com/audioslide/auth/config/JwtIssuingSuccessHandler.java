@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -21,6 +22,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -35,6 +37,9 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
     private final RefreshTokenService refreshTokenService;
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final GoogleTokenService googleTokenService;
+
+    @Value("${app.frontend.callback-url}")
+    private String frontendCallbackUrl;
 
     private static final String YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload";
 
@@ -61,8 +66,9 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
 
         boolean hasUploadScope = googleAccessToken.getScopes().contains(YOUTUBE_UPLOAD_SCOPE);
 
+        String channelId;
         try {
-            String channelId = googleTokenService.fetchChannelId(googleAccessToken.getTokenValue());
+            channelId = googleTokenService.fetchChannelId(googleAccessToken.getTokenValue());
             googleTokenService.addToken(user, googleAccessToken, refreshTokenValue, googleAccessToken.getExpiresAt(), channelId);
         } catch (GoogleTokenException e) {
             log.error("Failed to store Google token for user {}", email, e);
@@ -76,9 +82,22 @@ public class JwtIssuingSuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = refreshTokenService.issue(user);
         Claims claims = jwtService.validateAndParse(accessToken);
 
+        /*
         res.setContentType("application/json");
         res.getWriter().write("""
         {"accessToken":"%s","refreshToken":"%s","id":"%s","youtubeUploadGranted":%s}
         """.formatted(accessToken, refreshToken, claims.getSubject(), hasUploadScope));
+        */
+        String fragment = UriComponentsBuilder.newInstance()
+                .queryParam("accessToken", accessToken)
+                .queryParam("refreshToken", refreshToken)
+                .queryParam("channelId", channelId)
+                .queryParam("youtubeUploadGranted", hasUploadScope)
+                .build()
+                .encode()
+                .toUriString()
+                .substring(1);
+
+        res.sendRedirect(frontendCallbackUrl + "#" + fragment);
     }
 }
