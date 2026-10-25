@@ -27,6 +27,12 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+app:
+  frontend:
+    callback-url: ${FRONTEND_CALLBACK_URL:http://localhost:5173/auth/callback}
+
+server:
+  forward-headers-strategy: framework
 
 jwt:
   private-key: ${JWT_PRIVATE_KEY}
