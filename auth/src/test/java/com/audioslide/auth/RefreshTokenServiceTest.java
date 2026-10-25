@@ -54,7 +54,7 @@ public class RefreshTokenServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionIfTokenExpired() throws NoSuchMethodException {
+    void shouldThrowExceptionIfTokenExpired() {
         RefreshToken mockToken = new RefreshToken();
         mockToken.setExpiresAt(Instant.now().minusSeconds(10));
 
