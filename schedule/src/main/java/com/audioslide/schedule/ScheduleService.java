@@ -28,7 +28,7 @@ public class ScheduleService {
                 .map(e -> {
                     e.setScheduledDays(setScheduleRequestDto.days());
                     e.setScheduledTime(setScheduleRequestDto.time());
-                    ZoneId.of(setScheduleRequestDto.zoneId());
+                    e.setZoneId(ZoneId.of(setScheduleRequestDto.zoneId()));
                     log.info("set new schedule");
                     return e;
                 })
@@ -61,18 +61,18 @@ public class ScheduleService {
         Set<DayOfWeek> days = entity.getScheduledDays();
 
         Instant now = Instant.now();
-        Instant base;
 
-        if(entity.getLastUploadDateTime() != null && entity.getLastUploadDateTime().isBefore(now)) {
-            base = now;
-        } else {
-            base = entity.getLastUploadDateTime();
-        }
+        Instant last = entity.getLastUploadDateTime();
+        Instant base = (last == null || last.isBefore(now)) ? now : last;
 
         ZonedDateTime from = base.atZone(zone);
         LocalDate date = from.toLocalDate();
 
         List<ZonedDateTime> result = new ArrayList<>();
+
+        if (days.isEmpty()) {
+            throw new IllegalStateException("No scheduled days");
+        }
 
         while (result.size() < count) {
             if (days.contains(date.getDayOfWeek())) {
