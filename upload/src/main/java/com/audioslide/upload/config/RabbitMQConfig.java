@@ -31,6 +31,11 @@ public class RabbitMQConfig {
     @Value("${rabbit.queues.youtube.routing-key}")
     private String YOUTUBE_ROUTING_KEY;
 
+    @Value("${rabbit.queues.schedule.name}")
+    private String SCHEDULE_QUEUE_NAME;
+
+    @Value("${rabbit.queues.schedule.routing-key}")
+    private String SCHEDULE_ROUTING_KEY;
 
 
 
@@ -49,6 +54,10 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(YOUTUBE_QUEUE_NAME).build();
     }
 
+    @Bean
+    public Queue scheduleQueue() {
+        return QueueBuilder.durable(SCHEDULE_QUEUE_NAME).build();
+    }
 
 
     @Bean
@@ -60,6 +69,12 @@ public class RabbitMQConfig {
     public Binding youtubeBinding(Queue youtubeQueue, TopicExchange exchange) {
         return BindingBuilder.bind(youtubeQueue).to(exchange).with(YOUTUBE_ROUTING_KEY);
     }
+
+    @Bean
+    public Binding scheduleBinding(Queue scheduleQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(scheduleQueue).to(exchange).with(SCHEDULE_ROUTING_KEY);
+    }
+
 
     @Bean
     public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {

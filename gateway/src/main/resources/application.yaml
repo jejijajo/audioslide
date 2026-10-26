@@ -2,6 +2,18 @@ server:
   forward-headers-strategy: framework
   port: 8080
 
+springdoc:
+  swagger-ui:
+    urls:
+      - name: auth
+        url: /docs/auth/v3/api-docs
+      - name: upload
+        url: /docs/upload/v3/api-docs
+      - name: template
+        url: /docs/template/v3/api-docs
+      - name: schedule
+        url: /docs/schedule/v3/api-docs
+
 spring:
   application:
     name: gateway
@@ -21,6 +33,105 @@ spring:
                 - Path=/upload
               filters:
                 - SetPath=/api/upload
+
+            - id: template-create
+              uri: http://template:8080
+              predicates:
+                - Path=/template/create
+                - Method=POST
+              filters:
+                - SetPath=/api/template/create
+
+            - id: template-delete
+              uri: http://template:8080
+              predicates:
+                - Path=/template/{id}/delete
+                - Method=DELETE
+              filters:
+                - SetPath=/api/template/{id}/delete
+
+            - id: template-all
+              uri: http://template:8080
+              predicates:
+                - Path=/template
+                - Method=GET
+              filters:
+                - SetPath=/api/template
+
+            - id: template-read
+              uri: http://template:8080
+              predicates:
+                - Path=/template/{id}
+                - Method=GET
+              filters:
+                - SetPath=/api/template/{id}
+
+            - id: schedule-health
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/health
+                - Method=GET
+              filters:
+                - SetPath=/api/schedule/health
+
+            - id: schedule-set
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/set
+                - Method=POST
+              filters:
+                - SetPath=/api/schedule/set
+
+            - id: schedule-calculate
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule/calculate/{count}
+                - Method=GET
+              filters:
+                - SetPath=/api/schedule/calculate/{count}
+
+            - id: schedule-get
+              uri: http://schedule:8080
+              predicates:
+                - Path=/schedule
+                - Method=GET
+              filters:
+                - SetPath=/api/schedule
+
+            - id: auth-refresh
+              uri: http://auth:8080
+              predicates:
+                - Path=/auth/refresh
+                - Method=POST
+              filters:
+                - SetPath=/api/auth/refresh
+
+
+
+            - id: auth-docs
+              uri: http://auth:8080
+              predicates:
+                - Path=/docs/auth/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+            - id: upload-docs
+              uri: http://upload:8080
+              predicates:
+                - Path=/docs/upload/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+            - id: template-docs
+              uri: http://template:8080
+              predicates:
+                - Path=/docs/template/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+            - id: schedule-docs
+              uri: http://schedule:8080
+              predicates:
+                - Path=/docs/schedule/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
 
 management:
   endpoints:

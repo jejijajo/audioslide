@@ -24,8 +24,12 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/internal/token").permitAll()
-                        .requestMatchers("/login/**", "/oauth2/**", "/refresh", "/health").permitAll()
+                        .requestMatchers(
+                                "/internal/token",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**", "/api/auth/refresh", "/health").permitAll()
                         .requestMatchers("/internal/**").hasRole("SERVICE")
                         .anyRequest().authenticated()
                 )

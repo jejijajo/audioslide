@@ -30,4 +30,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(new ErrorDto("Required part is missing: " + e.getRequestPartName()));
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorDto> handleInvalidFileException(InvalidFileException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDto(e.getMessage()));
+    }
 }

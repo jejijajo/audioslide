@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: template
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  public-key: ${JWT_PUBLIC_KEY}
+
+template:
+  max-per-user: 10

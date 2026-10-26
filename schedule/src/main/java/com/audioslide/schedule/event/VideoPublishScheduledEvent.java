@@ -1,0 +1,6 @@
+package com.audioslide.schedule.event;
+
+import java.time.Instant;
+
+public record VideoPublishScheduledEvent(Long userId, Instant date) {
+}

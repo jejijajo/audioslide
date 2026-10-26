@@ -8,7 +8,6 @@ import com.audioslide.youtube.event.VideoPublishedEvent;
 import com.audioslide.youtube.event.YoutubeDataCreatedEvent;
 import com.audioslide.youtube.exception.StorageException;
 import com.audioslide.youtube.exception.YoutubeAuthException;
-import com.audioslide.youtube.exception.YoutubeProcessingException;
 import com.audioslide.youtube.exception.YoutubeUploadException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
@@ -29,8 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.List;
 @Slf4j
 @Service
@@ -49,6 +47,10 @@ public class YoutubeService {
 
     public void uploadVideo(YoutubeDataCreatedEvent youtubeDataCreatedEvent) {
         Video video = new Video();
+
+        log.info("YT upload: id={}, privacy={}, publishAt={}, now={}",
+                youtubeDataCreatedEvent.id(), youtubeDataCreatedEvent.privacyStatus(),
+                youtubeDataCreatedEvent.publishAt(), Instant.now());
 
         //metadata
 

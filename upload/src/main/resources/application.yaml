@@ -4,7 +4,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 20MB
-      max-request-size: 20MB
+      max-request-size: 40MB
   rabbitmq:
     username: ${RABBIT_USERNAME}
     password: ${RABBIT_PASSWORD}
@@ -39,6 +39,9 @@ rabbit:
     youtube:
       name: youtube_upload_queue
       routing-key: "youtube-upload-requested"
+    schedule:
+      name: schedule_video_scheduled_queue
+      routing-key: "video-scheduled"
 
 rabbit-listener:
   video-queue:
@@ -48,3 +51,6 @@ rabbit-listener:
 
 jwt:
   public-key: ${JWT_PUBLIC_KEY}
+
+audio:
+  max-length: 600

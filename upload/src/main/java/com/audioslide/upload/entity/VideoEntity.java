@@ -27,10 +27,10 @@ public class VideoEntity {
     @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String title;
 
-
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
