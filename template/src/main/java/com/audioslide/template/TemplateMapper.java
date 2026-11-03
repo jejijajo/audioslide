@@ -1,9 +1,6 @@
 package com.audioslide.template;
 
-import com.audioslide.template.dto.CreateTemplateRequestDto;
-import com.audioslide.template.dto.CreateTemplateResponseDto;
-import com.audioslide.template.dto.ReadAllTemplatesResponseDto;
-import com.audioslide.template.dto.ReadTemplateResponseDto;
+import com.audioslide.template.dto.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -56,5 +53,17 @@ public class TemplateMapper {
         templateEntity.setMadeForKids(dto.madeForKids());
 
         return templateEntity;
+    }
+
+    public static ChangeTemplateResponseDto fromTemplateEntityToChangeTemplateResponseDto(TemplateEntity templateEntity) {
+        return new ChangeTemplateResponseDto(
+                templateEntity.getId(),
+                templateEntity.getTemplateName(),
+                templateEntity.getTitle(),
+                templateEntity.getDescription(),
+                templateEntity.getCategoryId(),
+                templateEntity.getTags(),
+                templateEntity.getMadeForKids()
+        );
     }
 }

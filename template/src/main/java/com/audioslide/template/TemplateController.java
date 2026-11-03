@@ -1,9 +1,6 @@
 package com.audioslide.template;
 
-import com.audioslide.template.dto.CreateTemplateRequestDto;
-import com.audioslide.template.dto.CreateTemplateResponseDto;
-import com.audioslide.template.dto.ReadAllTemplatesResponseDto;
-import com.audioslide.template.dto.ReadTemplateResponseDto;
+import com.audioslide.template.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -44,4 +41,12 @@ public class TemplateController {
         return templateService.readTemplate(id, Long.parseLong(userId));
     }
 
+    @PatchMapping("/{id}")
+    public ChangeTemplateResponseDto changeTemplate(
+            @PathVariable Long id,
+            @AuthenticationPrincipal String userId,
+            @RequestBody ChangeTemplateRequestDto changeTemplateRequestDto
+            ) {
+        return templateService.changeTemplate(id, Long.parseLong(userId), changeTemplateRequestDto);
+    }
 }

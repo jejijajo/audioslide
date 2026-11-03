@@ -1,9 +1,6 @@
 package com.audioslide.template;
 
-import com.audioslide.template.dto.CreateTemplateRequestDto;
-import com.audioslide.template.dto.CreateTemplateResponseDto;
-import com.audioslide.template.dto.ReadAllTemplatesResponseDto;
-import com.audioslide.template.dto.ReadTemplateResponseDto;
+import com.audioslide.template.dto.*;
 import com.audioslide.template.exception.InvalidCategoryException;
 import com.audioslide.template.exception.TemplateAlreadyExistsException;
 import com.audioslide.template.exception.TemplateLimitExceededException;
@@ -73,5 +70,21 @@ public class TemplateService {
         log.info("successful delete template, id: {}", userId);
 
         templateRepository.delete(templateEntity);
+    }
+
+    public ChangeTemplateResponseDto changeTemplate(Long templateId, Long userId, ChangeTemplateRequestDto dto) {
+        TemplateEntity templateEntity = templateRepository.findByIdAndUserId(templateId, userId)
+                .orElseThrow(() -> new TemplateNotFoundException("Failed to find template"));
+
+        if (dto.templateName() != null) templateEntity.setTemplateName(dto.templateName());
+        if (dto.title() != null) templateEntity.setTitle(dto.title());
+        if (dto.description() != null) templateEntity.setDescription(dto.description());
+        if (dto.categoryId() != null) templateEntity.setCategoryId(dto.categoryId());
+        if (dto.tags() != null) templateEntity.setTags(dto.tags());
+        if (dto.madeForKids() != null) templateEntity.setMadeForKids(dto.madeForKids());
+
+        templateEntity = templateRepository.save(templateEntity);
+
+        return TemplateMapper.fromTemplateEntityToChangeTemplateResponseDto(templateEntity);
     }
 }
