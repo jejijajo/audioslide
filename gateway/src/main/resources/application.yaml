@@ -66,6 +66,14 @@ spring:
               filters:
                 - SetPath=/api/template/{id}
 
+            - id: template-change
+              uri: http://template:8080
+              predicates:
+                - Path=/template/{id}
+                - Method=PATCH
+              filters:
+                - SetPath=/api/template/{id}
+
             - id: schedule-health
               uri: http://schedule:8080
               predicates:
